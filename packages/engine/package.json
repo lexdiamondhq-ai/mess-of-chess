@@ -3,11 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "src/mess.ts",
+  "main": "src/paint.ts",
   "scripts": {
     "test": "vitest run --dir test",
-    "sim": "vitest run --dir sim --testTimeout 60000",
-    "typecheck": "tsc --noEmit --strict --target es2022 --moduleResolution bundler --module esnext src/mess.ts"
+    "typecheck": "tsc --noEmit --strict --target es2022 --moduleResolution bundler --module esnext src/paint.ts"
   },
   "dependencies": { "chess.js": "1.4.0" },
   "devDependencies": { "typescript": "7.0.2", "vitest": "5.1.0" }

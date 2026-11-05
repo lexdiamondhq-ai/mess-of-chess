@@ -1,10 +1,8 @@
 # A Mess of Chess
 
-Chess, but messy. A mobile game where every move leaves mess, you flick it onto your opponent's side, and you lose if your side gets buried.
+Chess, but messy. Normal chess rules, with every capture a splat, every check a pie in the face and checkmate a bucket of slime.
 
-- **Ranked:** the Mess Meter
-- **Campaign:** the Messy Kingdom, starring Mess the clumsy pawn
-- **Party:** House Rules, chess on a kitchen table with a cat, a dog and a toddler
+One extra rule, **Paint Chess**: every square your pieces land on gets painted your color. Checkmate wins; otherwise the most paint after 30 moves wins.
 
 ## Layout
 - `packages/engine`: the rules engine (TypeScript on chess.js), shared by the app and the server
@@ -23,4 +21,4 @@ cd apps/mobile
 npm install
 npx expo start
 ```
-Scan the QR code with the Expo Go app on your phone to play. Right now it's a pass-and-play Mess Meter match: Slime vs Goo on one phone.
+Scan the QR code with the Expo Go app on your phone to play. Right now it's a pass-and-play Paint Chess match: Slime vs Goo on one phone.

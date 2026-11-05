@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Image, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { PaintGame, ALL_SQUARES, type Color, type Square } from 'mess-of-chess-engine';
 
@@ -16,7 +16,25 @@ const C = {
   dark: '#E6DDF7',
 };
 
-const GLYPH: Record<string, string> = { k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟' };
+// Glossy vinyl toy pieces: lime for Slime (w), pink for Goo (b).
+const PIECE_ART = {
+  w: {
+    k: require('./assets/pieces/wking.png'),
+    q: require('./assets/pieces/wqueen.png'),
+    r: require('./assets/pieces/wrook.png'),
+    b: require('./assets/pieces/wbishop.png'),
+    n: require('./assets/pieces/wknight.png'),
+    p: require('./assets/pieces/wpawn.png'),
+  },
+  b: {
+    k: require('./assets/pieces/bking.png'),
+    q: require('./assets/pieces/bqueen.png'),
+    r: require('./assets/pieces/brook.png'),
+    b: require('./assets/pieces/bbishop.png'),
+    n: require('./assets/pieces/bknight.png'),
+    p: require('./assets/pieces/bpawn.png'),
+  },
+} as const;
 const NAME: Record<Color, string> = { w: 'Slime', b: 'Goo' };
 const PAINT: Record<Color, string> = { w: C.slime, b: C.goo };
 
@@ -105,7 +123,16 @@ export default function App() {
                     {picked === sq && <View style={s.ring} />}
                     {isTarget && <View style={[s.target, piece && s.targetCapture]} />}
                     {piece && (
-                      <Text style={[s.piece, { color: piece.color === 'w' ? C.cream : C.ink }]}>{GLYPH[piece.type]}</Text>
+                      <>
+                        <View style={s.pieceShadow} />
+                        <View pointerEvents="none" style={s.pieceBox}>
+                          <Image
+                            source={PIECE_ART[piece.color][piece.type as keyof (typeof PIECE_ART)['w']]}
+                            style={s.pieceImg}
+                            resizeMode="contain"
+                          />
+                        </View>
+                      </>
                     )}
                   </Pressable>
                 );
@@ -222,7 +249,10 @@ const s = StyleSheet.create({
   ring: { ...fill, margin: 2, borderRadius: 10, borderWidth: 3, borderColor: C.ink },
   target: { position: 'absolute', width: '30%', aspectRatio: 1, borderRadius: 999, backgroundColor: C.ink, opacity: 0.35 },
   targetCapture: { width: '86%', backgroundColor: 'transparent', borderWidth: 3, borderColor: C.ink, opacity: 0.5 },
-  piece: { fontSize: 30, textShadowColor: C.ink, textShadowRadius: 2, textShadowOffset: { width: 0, height: 1 } },
+  // The art overhangs the square upward a little, like a real piece standing on the board.
+  pieceBox: { position: 'absolute', left: '-14%', right: '-14%', top: '-34%', bottom: '2%' },
+  pieceImg: { width: '100%', height: '100%' },
+  pieceShadow: { position: 'absolute', bottom: '5%', width: '50%', height: '12%', borderRadius: 999, backgroundColor: C.ink, opacity: 0.22 },
   overlay: { ...fill, alignItems: 'center', justifyContent: 'center' },
   burst: { paddingHorizontal: 26, paddingVertical: 14, borderRadius: 28, borderWidth: 4, borderColor: C.ink },
   burstText: { color: C.ink, fontSize: 34, fontWeight: '900' },

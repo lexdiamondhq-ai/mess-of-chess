@@ -4,6 +4,7 @@
 import { Chess, type Square, type Move as ChessMove } from 'chess.js';
 
 export type Color = 'w' | 'b';
+export type { Square };
 
 export interface Rules {
   /** Mess added to the square a piece leaves. */

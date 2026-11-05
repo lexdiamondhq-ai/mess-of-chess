@@ -8,7 +8,7 @@ Chess, but messy. A mobile game where every move leaves mess, you flick it onto 
 
 ## Layout
 - `packages/engine`: the rules engine (TypeScript on chess.js), shared by the app and the server
-- `apps/mobile`: the Expo app (coming next)
+- `apps/mobile`: the Expo app (iPhone, Android and web)
 
 ## Engine
 ```
@@ -16,3 +16,11 @@ cd packages/engine
 npm install
 npm test
 ```
+
+## App
+```
+cd apps/mobile
+npm install
+npx expo start
+```
+Scan the QR code with the Expo Go app on your phone to play. Right now it's a pass-and-play Mess Meter match: Slime vs Goo on one phone.

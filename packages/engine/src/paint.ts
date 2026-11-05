@@ -50,6 +50,19 @@ export class PaintGame {
     this.chess = new Chess(fen);
   }
 
+  /** A copy to try moves on (the bot uses this). Repetition history is not copied. */
+  clone(): PaintGame {
+    const g = new PaintGame(this.rules, this.chess.fen());
+    for (const [k, v] of this.paint) g.paint.set(k, v);
+    g.result = this.result;
+    return g;
+  }
+
+  /** True if `color` attacks `square` right now. */
+  attacked(square: Square, color: Color): boolean {
+    return this.chess.isAttacked(square, color);
+  }
+
   get turn(): Color {
     return this.chess.turn();
   }
@@ -122,3 +135,4 @@ export class PaintGame {
     return { over: false };
   }
 }
+export * from './bot';

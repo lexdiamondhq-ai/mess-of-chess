@@ -11,97 +11,117 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { Splat } from './Splat';
-import { isLight } from './color';
 import { C, F } from '../theme';
 
 export interface Hit {
   key: number;
   kind: 'capture' | 'check' | 'mate';
-  /** Big word that slams onto the screen. */
+  /** The word that gets splatted onto the screen in paint, e.g. the captured piece's name. */
   word: string;
-  /** Small line above it. */
-  tag: string;
+  /** Paint colour the letters are made of. */
   color: string;
 }
 
+/** Tiny seeded random so each word splats the same way every time it renders. */
+function seeded(n: number) {
+  const x = Math.sin(n * 9301 + 49297) * 233280;
+  return x - Math.floor(x);
+}
+
 /**
- * The capture moment. A huge splat slaps onto the "glass", the captured piece's
- * name slams in on top, then the whole thing slowly slides down the screen and fades.
+ * The capture moment. The captured piece's name is splatted onto the glass,
+ * one gloopy paint letter at a time. The letters drip, then the whole word
+ * slowly slides down the screen and fades away.
  */
 export function CaptureFX({ hit, onDone }: { hit: Hit; onDone: () => void }) {
   const { width, height } = useWindowDimensions();
-  const slap = useSharedValue(0);
-  const word = useSharedValue(0);
   const slide = useSharedValue(0);
-  const drip = useSharedValue(0);
-  const size = Math.min(width * 1.05, 520);
-  const hold = hit.kind === 'mate' ? 1300 : hit.kind === 'check' ? 450 : 650;
-  const fallTime = hit.kind === 'check' ? 1200 : 1900;
+  const letters = hit.word.split('');
+  const fontSize = Math.min(118, (width * 0.9) / (letters.length * 0.64));
+  const land = 90 + letters.length * 65;
+  const hold = hit.kind === 'mate' ? 1300 : hit.kind === 'check' ? 450 : 700;
+  const fallTime = hit.kind === 'check' ? 1300 : 2000;
 
   useEffect(() => {
-    slap.value = 0;
-    word.value = 0;
     slide.value = 0;
-    drip.value = 0;
-    slap.value = withSpring(1, { damping: 9, stiffness: 260, mass: 0.7 });
-    word.value = withDelay(110, withTiming(1, { duration: 260, easing: Easing.out(Easing.back(2.6)) }));
-    drip.value = withDelay(260, withTiming(1, { duration: hold + fallTime, easing: Easing.inOut(Easing.quad) }));
     slide.value = withDelay(
-      260 + hold,
+      land + hold,
       withTiming(1, { duration: fallTime, easing: Easing.in(Easing.quad) }, (done) => {
         if (done) runOnJS(onDone)();
       }),
     );
   }, [hit.key]);
 
-  const glass = useAnimatedStyle(() => ({
-    opacity: slap.value === 0 ? 0 : 1 - Math.max(0, slide.value - 0.45) / 0.55,
-    transform: [
-      { translateY: slide.value * height * 0.75 },
-      { scaleY: 1 + slide.value * 0.3 },
-      { scale: 0.25 + slap.value * 0.75 },
-      { rotate: `${(1 - slap.value) * 25}deg` },
-    ],
+  const fall = useAnimatedStyle(() => ({
+    opacity: 1 - Math.max(0, slide.value - 0.5) / 0.5,
+    transform: [{ translateY: slide.value * height * 0.7 }, { scaleY: 1 + slide.value * 0.25 }],
   }));
-  const wordStyle = useAnimatedStyle(() => ({
-    opacity: Math.min(1, word.value * 2),
-    transform: [{ scale: 3.2 - word.value * 2.2 }, { rotate: `${-8 + (1 - word.value) * -12}deg` }],
-  }));
-  const drips = useAnimatedStyle(() => ({ transform: [{ scaleY: 0.05 + drip.value }] }));
-
-  const light = isLight(hit.color);
-  const textColor = light ? C.ink : C.light;
-  const shadow = light ? C.light : C.ink;
 
   return (
     <View pointerEvents="none" style={[StyleSheet.absoluteFill, s.center]}>
-      <Animated.View style={[s.center, { width: size, height: size, marginTop: -height * 0.08 }, glass]}>
-        <Splat color={hit.color} size={size} seed={hit.key % 997} arms={9} dots={14} drips={0} />
-        {/* Long drips that keep running down while the splat slides. */}
-        <View style={[StyleSheet.absoluteFill, { top: size * 0.55 }]}>
-          {[0.27, 0.41, 0.58, 0.7].map((x, i) => (
-            <Animated.View
-              key={i}
-              style={[
-                s.drip,
-                { left: x * size, width: 10 + ((i * 7) % 9), height: size * (0.32 + ((i * 13) % 5) * 0.08), backgroundColor: hit.color, transformOrigin: 'top' },
-                drips,
-              ]}
-            />
-          ))}
-        </View>
-        <Animated.View style={[s.center, StyleSheet.absoluteFill, wordStyle]}>
-          <Text style={[s.tag, { color: textColor, textShadowColor: shadow }]}>{hit.tag}</Text>
-          <Text
-            style={[s.word, { color: textColor, textShadowColor: shadow, fontSize: Math.min(80, (size * 0.84) / (hit.word.length * 0.72)) }]}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-          >
-            {hit.word}
-          </Text>
-        </Animated.View>
+      <Animated.View style={[s.row, { marginTop: -height * 0.06 }, fall]}>
+        {letters.map((ch, i) => (
+          <PaintLetter key={`${hit.key}-${i}`} ch={ch} i={i} seed={hit.key % 1000} size={fontSize} color={hit.color} drip={land + hold + fallTime} />
+        ))}
       </Animated.View>
     </View>
+  );
+}
+
+function PaintLetter({ ch, i, seed, size, color, drip }: { ch: string; i: number; seed: number; size: number; color: string; drip: number }) {
+  const r = (k: number) => seeded(seed + i * 17 + k);
+  const slam = useSharedValue(0);
+  const flow = useSharedValue(0);
+  const tiltEnd = (r(1) - 0.5) * 14;
+  const tiltStart = (r(2) - 0.5) * 50;
+  const hasDrip = ch !== ' ' && r(3) < 0.7;
+  const dripX = 0.25 + r(4) * 0.5;
+  const dripLen = size * (0.35 + r(5) * 0.7);
+  const lift = (r(6) - 0.5) * size * 0.16;
+
+  useEffect(() => {
+    slam.value = withDelay(90 + i * 65, withSpring(1, { damping: 7, stiffness: 320, mass: 0.6 }));
+    flow.value = withDelay(260 + i * 65, withTiming(1, { duration: drip, easing: Easing.out(Easing.quad) }));
+  }, []);
+
+  const letter = useAnimatedStyle(() => ({
+    opacity: Math.min(1, slam.value * 3),
+    transform: [
+      { translateY: lift },
+      { scale: 2.6 - Math.min(slam.value, 1.2) * 1.6 + (slam.value > 1 ? 0 : 0) },
+      { rotate: `${tiltStart + (tiltEnd - tiltStart) * Math.min(1, slam.value)}deg` },
+    ],
+  }));
+  const dripStyle = useAnimatedStyle(() => ({ transform: [{ scaleY: 0.02 + flow.value }] }));
+  const ball = useAnimatedStyle(() => ({ transform: [{ translateY: flow.value * dripLen }] }));
+
+  if (ch === ' ') return <View style={{ width: size * 0.3 }} />;
+
+  // Ink copies behind the paint give each letter a thick outline and a chunky drop shadow.
+  const o = Math.max(2, size * 0.045);
+  const outline = [
+    [-o, 0], [o, 0], [0, -o], [0, o], [-o, -o], [o, -o], [-o, o], [o, o], [0, o * 2.6], [o, o * 2.6], [-o, o * 2.6],
+  ];
+  const t = { fontFamily: F.display, fontSize: size, lineHeight: size * 1.08 };
+  return (
+    <Animated.View style={[{ marginHorizontal: -size * 0.015 }, letter]}>
+      {/* splatter flicked off the letter as it hits */}
+      <View style={[StyleSheet.absoluteFill, s.center]}>
+        <Splat color={color} size={size * 1.25} seed={seed + i * 31} arms={6} dots={8} drips={0} shine={false} style={{ opacity: 0.9 }} />
+      </View>
+      {hasDrip && (
+        <View style={{ position: 'absolute', left: `${dripX * 100}%`, top: size * 0.82 }}>
+          <Animated.View style={[{ width: size * 0.16, height: dripLen, marginLeft: -size * 0.08, backgroundColor: color, borderColor: C.ink, borderWidth: o * 0.7, borderTopWidth: 0, borderBottomLeftRadius: 99, borderBottomRightRadius: 99, transformOrigin: 'top' }, dripStyle]} />
+          <Animated.View style={[{ position: 'absolute', top: -size * 0.02, left: -size * 0.11, width: size * 0.22, height: size * 0.22, borderRadius: 99, backgroundColor: color, borderColor: C.ink, borderWidth: o * 0.7 }, ball]} />
+        </View>
+      )}
+      {outline.map(([x, y], k) => (
+        <Text key={k} style={[t, { position: 'absolute', left: x, top: y, color: C.ink }]}>
+          {ch}
+        </Text>
+      ))}
+      <Text style={[t, { color }]}>{ch}</Text>
+    </Animated.View>
   );
 }
 
@@ -125,6 +145,7 @@ export function SquareBurst({ x, y, color, seed, sq }: { x: number; y: number; c
 
 const s = StyleSheet.create({
   center: { alignItems: 'center', justifyContent: 'center' },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   word: { fontFamily: F.display, textShadowOffset: { width: 0, height: 6 }, textShadowRadius: 0, letterSpacing: 1, maxWidth: '86%' },
   tag: { fontFamily: F.display, fontSize: 22, letterSpacing: 3, textShadowOffset: { width: 0, height: 3 }, textShadowRadius: 0, marginBottom: -6 },
   drip: { position: 'absolute', top: 0, borderBottomLeftRadius: 99, borderBottomRightRadius: 99 },

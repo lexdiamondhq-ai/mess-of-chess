@@ -91,19 +91,18 @@ export function Game({ mode, level }: { mode: 'bot' | 'friend'; level: BotLevel 
     }
     const paint = sets[mover].paint;
     if (r.result.over && r.result.reason === 'checkmate') {
-      setHit({ key: Date.now(), kind: 'mate', word: 'CHECKMATE', tag: `${names[mover].toUpperCase()} WINS`, color: paint });
+      setHit({ key: Date.now(), kind: 'mate', word: 'CHECKMATE', color: paint });
       shakeIt(true);
     } else if (capturedType) {
       setHit({
         key: Date.now(),
         kind: 'capture',
-        word: `${PIECE_NAME[capturedType].toUpperCase()}!`,
-        tag: r.check ? 'SPLAT + CHECK' : 'SPLAT',
+        word: PIECE_NAME[capturedType].toUpperCase(),
         color: paint,
       });
       shakeIt(capturedType === 'q' || capturedType === 'r');
     } else if (r.check) {
-      setHit({ key: Date.now(), kind: 'check', word: 'CHECK!', tag: 'PIE IN THE FACE', color: C.cream });
+      setHit({ key: Date.now(), kind: 'check', word: 'CHECK', color: C.cream });
       shakeIt(false);
     }
     if (r.stolen.length) setNote(`${names[mover]} painted over ${names[mover === 'w' ? 'b' : 'w']}'s square!`);

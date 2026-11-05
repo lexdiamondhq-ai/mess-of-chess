@@ -16,7 +16,7 @@ const C = {
   dark: '#E6DDF7',
 };
 
-// Glossy vinyl toy pieces: lime for Slime (w), pink for Goo (b).
+// Paint Supplies pieces: lime for Slime (w), pink for Goo (b).
 const PIECE_ART = {
   w: {
     k: require('./assets/pieces/wking.png'),
@@ -250,7 +250,7 @@ const s = StyleSheet.create({
   target: { position: 'absolute', width: '30%', aspectRatio: 1, borderRadius: 999, backgroundColor: C.ink, opacity: 0.35 },
   targetCapture: { width: '86%', backgroundColor: 'transparent', borderWidth: 3, borderColor: C.ink, opacity: 0.5 },
   // The art overhangs the square upward a little, like a real piece standing on the board.
-  pieceBox: { position: 'absolute', left: '-14%', right: '-14%', top: '-34%', bottom: '2%' },
+  pieceBox: { position: 'absolute', left: '-10%', right: '-10%', top: '-24%', bottom: '2%' },
   pieceImg: { width: '100%', height: '100%' },
   pieceShadow: { position: 'absolute', bottom: '5%', width: '50%', height: '12%', borderRadius: 999, backgroundColor: C.ink, opacity: 0.22 },
   overlay: { ...fill, alignItems: 'center', justifyContent: 'center' },

@@ -3,7 +3,6 @@ import { Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'r
 import Animated, { ZoomIn, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useEffect } from 'react';
 import { Shell, type Phase } from './Shell';
-import { Splat } from '../ui/Splat';
 import { buzz } from '../ui/Bouncy';
 import { useStore } from '../store';
 import { SETS } from '../pieces';
@@ -70,9 +69,7 @@ export function KnightPaint() {
         ))}
         {[...painted].map((i) => (
           <View key={`p${i}`} pointerEvents="none" style={[s.cell, { left: 8 + (i % N) * cell, top: 8 + Math.floor(i / N) * cell, width: cell, height: cell }]}>
-            <Animated.View entering={ZoomIn.springify().damping(7)} style={{ position: 'absolute', left: -cell * 0.45, top: -cell * 0.45 }}>
-              <Splat color={set.paint} size={cell * 1.9} seed={i * 7 + 2} arms={4} dots={3} drips={1} />
-            </Animated.View>
+            <Animated.View entering={ZoomIn.springify().damping(9)} style={{ width: cell, height: cell, backgroundColor: set.paint, opacity: 0.82, borderRadius: cell * 0.08 }} />
           </View>
         ))}
         {Array.from({ length: N * N }, (_, i) => {

@@ -15,7 +15,7 @@ import { Screen, BackButton, Title, Card, Body } from '../ui/Screen';
 import { MessyButton } from '../ui/MessyButton';
 import { MeterBar } from '../ui/MeterBar';
 import { Splat } from '../ui/Splat';
-import { CaptureFX, SquareBurst, type Hit } from '../ui/CaptureFX';
+import { CaptureFX, type Hit } from '../ui/CaptureFX';
 import { buzz } from '../ui/Bouncy';
 import { useNav } from '../nav';
 import { METER_MAX, useStore } from '../store';
@@ -32,12 +32,6 @@ interface Last {
   to: Square;
   id: number;
 }
-interface Burst {
-  x: number;
-  y: number;
-  color: string;
-  seed: number;
-}
 
 export function Game({ mode, level }: { mode: 'bot' | 'friend'; level: BotLevel }) {
   const nav = useNav();
@@ -49,7 +43,6 @@ export function Game({ mode, level }: { mode: 'bot' | 'friend'; level: BotLevel 
   const [fresh, setFresh] = useState<Square[]>([]);
   const [last, setLast] = useState<Last | null>(null);
   const [hit, setHit] = useState<Hit | null>(null);
-  const [burst, setBurst] = useState<Burst | null>(null);
   const [taken, setTaken] = useState<Record<Color, PieceType[]>>({ w: [], b: [] });
   const [note, setNote] = useState('Tap a piece, then tap where to splat it.');
   const [reward, setReward] = useState<{ before: number; gained: number } | null>(null);
@@ -72,7 +65,6 @@ export function Game({ mode, level }: { mode: 'bot' | 'friend'; level: BotLevel 
 
   function play(from: Square, to: Square) {
     const mover = game.turn;
-    const victim = game.pieceAt(to);
     const r = game.move(from, to);
     if (!r.ok || !r.move) return;
     moveId.current += 1;
@@ -83,9 +75,6 @@ export function Game({ mode, level }: { mode: 'bot' | 'friend'; level: BotLevel 
     if (capturedType) {
       const victimColor: Color = mover === 'w' ? 'b' : 'w';
       setTaken((t) => ({ ...t, [mover]: [...t[mover], capturedType] }));
-      // En passant takes a pawn that isn't on the target square, so splat where it was.
-      const at = victim ? to : ((to[0] + from[1]) as Square);
-      setBurst({ x: 8 + col(at) * sq + sq / 2, y: 8 + row(at) * sq + sq / 2, color: sets[mover].paint, seed: moveId.current * 31 });
       if (mode === 'friend' || mover === 'w') caps.current += 1;
       void victimColor;
     }
@@ -164,7 +153,6 @@ export function Game({ mode, level }: { mode: 'bot' | 'friend'; level: BotLevel 
     setFresh([]);
     setLast(null);
     setHit(null);
-    setBurst(null);
     setTaken({ w: [], b: [] });
     setReward(null);
     caps.current = 0;
@@ -242,7 +230,6 @@ export function Game({ mode, level }: { mode: 'bot' | 'friend'; level: BotLevel 
               );
             })}
           </View>
-          {burst && <SquareBurst key={burst.seed} {...burst} sq={sq} />}
         </Animated.View>
 
         <PlayerCard color="w" game={game} set={sets.w} name={names.w} taken={taken.w} enemy={sets.b} />
@@ -308,20 +295,16 @@ function PieceView({ src, sq, lift, from }: { src: any; sq: number; lift: boolea
   );
 }
 
-function PaintSpot({ color, seed, fresh, size }: { color: string; seed: number; fresh: boolean; size: number }) {
-  const g = useSharedValue(fresh ? 0.1 : 1);
+/** A square soaked in paint. It wells up from the centre when it's freshly painted. */
+function PaintSpot({ color, fresh, size }: { color: string; seed?: number; fresh: boolean; size: number }) {
+  const g = useSharedValue(fresh ? 0 : 1);
   useEffect(() => {
     if (!fresh) return;
-    g.value = 0.1;
-    g.value = withSpring(1, { damping: 7, stiffness: 160 });
+    g.value = 0;
+    g.value = withSpring(1, { damping: 9, stiffness: 180 });
   }, [fresh, color]);
-  const st = useAnimatedStyle(() => ({ transform: [{ scale: g.value }] }));
-  const big = size * 2;
-  return (
-    <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: (size - big) / 2, top: (size - big) / 2, width: big, height: big, opacity: 0.88 }, st]}>
-      <Splat color={color} size={big} seed={seed} arms={4} dots={3} drips={1} />
-    </Animated.View>
-  );
+  const st = useAnimatedStyle(() => ({ transform: [{ scale: 0.3 + g.value * 0.7 }], opacity: Math.min(1, g.value * 2) * 0.82 }));
+  return <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: 0, top: 0, width: size, height: size, backgroundColor: color, borderRadius: size * 0.08 }, st]} />;
 }
 
 function PaintBar({ game, sets }: { game: PaintGame; sets: Record<Color, PieceSet> }) {

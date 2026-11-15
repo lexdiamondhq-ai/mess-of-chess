@@ -23,7 +23,7 @@ const cache = new Map<string, SplatShape>();
 const f = (n: number) => n.toFixed(1);
 
 /** Smooth closed path through points (Catmull-Rom to cubic Bezier). */
-function smooth(pts: [number, number][]) {
+export function smooth(pts: [number, number][]) {
   const n = pts.length;
   let d = `M${f(pts[0][0])},${f(pts[0][1])}`;
   for (let i = 0; i < n; i++) {

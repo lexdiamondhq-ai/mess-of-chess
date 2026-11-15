@@ -13,7 +13,7 @@ import Animated, {
 import { PaintGame, pickMove, ALL_SQUARES, type BotLevel, type Color, type Square } from 'mess-of-chess-engine';
 import { Screen, BackButton, Card, Body, Chip } from '../ui/Screen';
 import { OutlineText } from '../ui/OutlineText';
-import { BOARD_RADIUS, BoardFrame, BoardSquares, paintStyle, tileStyle } from '../ui/Board';
+import { BOARD_RADIUS, BoardFrame, BoardPaint, BoardSquares, tileStyle } from '../ui/Board';
 import { MessyButton } from '../ui/MessyButton';
 import { MeterBar } from '../ui/MeterBar';
 import { Splat } from '../ui/Splat';
@@ -185,7 +185,7 @@ export function Game({ mode, level }: { mode: 'bot' | 'friend'; level: BotLevel 
 
         <Animated.View style={[{ width: boardW, height: boardW }, shakeStyle]}>
           <BoardFrame />
-          {/* 1. Squares, last-move tint and paint, clipped to the rounded board */}
+          {/* 1. Squares and the last-move tint, clipped to the rounded board */}
           <View style={s.boardClip}>
             <BoardSquares n={8} sq={sq} />
             {last && [last.from, last.to].map((q) => (
@@ -193,22 +193,22 @@ export function Game({ mode, level }: { mode: 'bot' | 'friend'; level: BotLevel 
                 <View style={[tileStyle(sq), s.lastMove]} />
               </View>
             ))}
-            {ALL_SQUARES.map((q) => {
-              const paint = game.paintAt(q);
-              if (!paint) return null;
-              return (
-                <View key={q} pointerEvents="none" style={[s.cell, { left: col(q) * sq, top: row(q) * sq, width: sq, height: sq }]}>
-                  <PaintSpot color={sets[paint].paint} fresh={fresh.includes(q)} size={sq} />
-                </View>
-              );
-            })}
-            {picked && (
-              <View pointerEvents="none" style={[s.cell, { left: col(picked) * sq, top: row(picked) * sq, width: sq, height: sq }]}>
-                <View style={[tileStyle(sq), s.ring]} />
-              </View>
-            )}
           </View>
-          {/* 2. Pieces, the one that just moved drawn on top. They may poke over the board edge. */}
+          {/* 2. Paint. It sits outside the clip so it can run over the edge of the board. */}
+          <BoardPaint
+            n={8}
+            sq={sq}
+            spots={ALL_SQUARES.flatMap((q) => {
+              const paint = game.paintAt(q);
+              return paint ? [{ x: col(q), y: row(q), color: sets[paint].paint, fresh: fresh.includes(q) }] : [];
+            })}
+          />
+          {picked && (
+            <View pointerEvents="none" style={[s.cell, { left: col(picked) * sq, top: row(picked) * sq, width: sq, height: sq }]}>
+              <View style={[tileStyle(sq), s.ring]} />
+            </View>
+          )}
+          {/* 3. Pieces, the one that just moved drawn on top. They may poke over the board edge. */}
           {ALL_SQUARES.map((q) => game.pieceAt(q) && q)
             .filter((q): q is Square => Boolean(q))
             .sort((a, b) => (last?.to === a ? 1 : last?.to === b ? -1 : row(a) - row(b)))
@@ -226,7 +226,7 @@ export function Game({ mode, level }: { mode: 'bot' | 'friend'; level: BotLevel 
                 </View>
               );
             })}
-          {/* 3. Touch targets and move hints */}
+          {/* 4. Touch targets and move hints */}
           {ALL_SQUARES.map((q) => {
             const piece = game.pieceAt(q);
             const paint = game.paintAt(q);
@@ -305,18 +305,6 @@ function PieceView({ src, sq, lift, from }: { src: any; sq: number; lift: boolea
       </View>
     </Animated.View>
   );
-}
-
-/** A square soaked in paint. It wells up from the centre when it's freshly painted. */
-function PaintSpot({ color, fresh, size }: { color: string; fresh: boolean; size: number }) {
-  const g = useSharedValue(fresh ? 0 : 1);
-  useEffect(() => {
-    if (!fresh) return;
-    g.value = 0;
-    g.value = withSpring(1, { damping: 11, stiffness: 190 });
-  }, [fresh, color]);
-  const st = useAnimatedStyle(() => ({ transform: [{ scale: 0.3 + Math.min(1, g.value) * 0.7 }], opacity: Math.min(1, g.value * 2) }));
-  return <Animated.View pointerEvents="none" style={[paintStyle(size, color), st]} />;
 }
 
 /** The score: two big numbers and one line of paint split between the players. */
@@ -435,7 +423,7 @@ const s = StyleSheet.create({
   cell: { position: 'absolute' },
   square: { alignItems: 'center', justifyContent: 'center' },
   lastMove: { backgroundColor: C.yellow },
-  ring: { backgroundColor: C.white, ...edge(3.5) },
+  ring: { backgroundColor: 'rgba(255,255,255,0.55)', ...edge(3.5) },
   target: { position: 'absolute', width: '34%', aspectRatio: 1, borderRadius: 999, backgroundColor: C.white, zIndex: 9, ...edge(3) },
   targetCapture: { width: '88%', backgroundColor: 'transparent', borderWidth: 4, borderColor: C.ink },
   pieceBox: { position: 'absolute', left: '-6%', right: '-6%', top: '-13%', bottom: '1%' },

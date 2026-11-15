@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import Animated, { ZoomIn, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useEffect } from 'react';
 import { Shell, type Phase } from './Shell';
 import { buzz } from '../ui/Bouncy';
 import { useStore } from '../store';
 import { SETS } from '../pieces';
 import { C, F, edge, fill } from '../theme';
-import { BOARD_RADIUS, BoardFrame, BoardSquares, paintStyle } from '../ui/Board';
+import { BOARD_RADIUS, BoardFrame, BoardPaint, BoardSquares } from '../ui/Board';
 
 const N = 5;
 const JUMPS = [
@@ -68,12 +68,8 @@ export function KnightPaint() {
         <BoardFrame />
         <View style={s.clip} pointerEvents="none">
           <BoardSquares n={N} sq={cell} />
-          {[...painted].map((i) => (
-            <View key={`p${i}`} pointerEvents="none" style={[s.cell, { left: (i % N) * cell, top: Math.floor(i / N) * cell, width: cell, height: cell }]}>
-              <Animated.View entering={ZoomIn.springify().damping(9)} style={paintStyle(cell, set.paint)} />
-            </View>
-          ))}
         </View>
+        <BoardPaint n={N} sq={cell} spots={[...painted].map((i) => ({ x: i % N, y: Math.floor(i / N), color: set.paint, fresh: i === at && painted.size > 1 }))} />
         {Array.from({ length: N * N }, (_, i) => {
           const can = moves.includes(i) && phase === 'play';
           return (

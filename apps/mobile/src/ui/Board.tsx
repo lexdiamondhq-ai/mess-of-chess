@@ -6,22 +6,38 @@ import { rng, smooth } from './splatShape';
 import { C, edge, fill, hard } from '../theme';
 
 /**
- * How the board is drawn. All three are messy on purpose.
- * - wet: a hand-painted board. Painted squares are gloopy puddles that run together and drip.
+ * How the board is drawn.
+ * The first three are the same wet-paint idea at three levels of mess. Painted squares are
+ * puddles with an ink outline that pool together with their neighbours.
+ * - damp: a little messy. Crisp squares, soft-edged paint, the odd short drip.
+ * - gloopy: medium messy. A hand-painted board, wobblier paint, more drips.
+ * - wet: very messy. Big wobbly puddles, long drips, flung droplets, paint over the edge.
+ * The other two are different ideas:
  * - wonky: tiles tossed into a tray, every one a bit crooked.
  * - scribble: coloured in with fat markers, well outside the lines.
  */
-export type BoardSkin = 'wet' | 'wonky' | 'scribble';
+export type BoardSkin = 'damp' | 'gloopy' | 'wet' | 'wonky' | 'scribble';
 
-const SKINS: BoardSkin[] = ['wet', 'wonky', 'scribble'];
+const SKINS: BoardSkin[] = ['damp', 'gloopy', 'wet', 'wonky', 'scribble'];
 const fromEnv = process.env.EXPO_PUBLIC_BOARD as BoardSkin | undefined;
-export const BOARD_SKIN: BoardSkin = fromEnv && SKINS.includes(fromEnv) ? fromEnv : 'wet';
+export const BOARD_SKIN: BoardSkin = fromEnv && SKINS.includes(fromEnv) ? fromEnv : 'gloopy';
 
 const LOOK = {
+  damp: { tray: C.white, dark: '#BDE4FF' },
+  gloopy: { tray: C.white, dark: '#BDE4FF' },
   wet: { tray: C.white, dark: '#BDE4FF' },
   wonky: { tray: C.ink, dark: C.lilac },
   scribble: { tray: C.white, dark: '#8EC3F5' },
 } as const;
+
+/** The mess dial for the wet-paint boards. Lengths are in a square that runs 0..100. */
+const MESS = {
+  damp: { reach: 51.5, wobble: 2, drips: 0.2, dripMax: 12, drops: 0, squares: 0 },
+  gloopy: { reach: 53, wobble: 4, drips: 0.38, dripMax: 22, drops: 0.15, squares: 3 },
+  wet: { reach: 55, wobble: 7, drips: 0.6, dripMax: 34, drops: 0.55, squares: 6 },
+} as const;
+type WetSkin = keyof typeof MESS;
+const isWet = (skin: BoardSkin): skin is WetSkin => skin in MESS;
 
 export const BOARD_RADIUS = 18;
 const BORDER = 3;
@@ -58,24 +74,25 @@ interface Wet {
   drops: { x: number; y: number; r: number }[];
 }
 
-function wetShape(seed: number): Wet {
-  return cached(`wet:${seed}`, () => {
+function wetShape(seed: number, skin: WetSkin): Wet {
+  return cached(`wet:${skin}:${seed}`, () => {
+    const m = MESS[skin];
     const r = rng(seed * 57 + 3);
     let drip = '';
-    if (r() < 0.6) {
+    if (r() < m.drips) {
       const x = 22 + r() * 56;
       const w = 11 + r() * 8;
-      const end = 112 + r() * 34;
+      const end = 112 + r() * m.dripMax;
       drip = `M${x - w / 2},78L${x - w / 2},${end}A${w / 2},${w / 2} 0 0 0 ${x + w / 2},${end}L${x + w / 2},78Z`;
     }
     const drops: Wet['drops'] = [];
-    const count = r() < 0.55 ? 1 + Math.floor(r() * 2) : 0;
+    const count = r() < m.drops ? 1 + Math.floor(r() * 2) : 0;
     for (let i = 0; i < count; i++) {
       const a = r() * Math.PI * 2;
       const d = 66 + r() * 12;
       drops.push({ x: 50 + Math.cos(a) * d, y: 50 + Math.sin(a) * d, r: 3 + r() * 3.5 });
     }
-    return { blob: blobPath(seed, 55, 7), drip, drops };
+    return { blob: blobPath(seed, m.reach, m.wobble), drip, drops };
   });
 }
 
@@ -157,8 +174,12 @@ export function BoardSquares({ n, sq, skin = BOARD_SKIN }: { n: number; sq: numb
         .filter((c) => c.dark)
         .map((c) => (
           <G key={c.i} transform={`translate(${c.x * sq} ${c.y * sq}) scale(${k})`}>
-            {skin === 'wet' ? (
-              <Path d={blobPath(c.i + 400, 48, 6)} fill={look.dark} />
+            {isWet(skin) ? (
+              MESS[skin].squares ? (
+                <Path d={blobPath(c.i + 400, 48, MESS[skin].squares)} fill={look.dark} />
+              ) : (
+                <Rect x={0} y={0} width={100} height={100} fill={look.dark} />
+              )
             ) : (
               <Path d={scribblePath(c.i + 400, 9, 40)} fill="none" stroke={look.dark} strokeWidth={7} strokeLinecap="round" strokeLinejoin="round" />
             )}
@@ -202,7 +223,7 @@ export function BoardPaint({ n, sq, spots, skin = BOARD_SKIN }: { n: number; sq:
             .map((s) => (
               <Grow key={`${color}-${layer}-${s.x}-${s.y}`} fresh={s.fresh} style={{ position: 'absolute', left: (s.x - 0.5) * sq, top: (s.y - 0.5) * sq, width: sq * 2, height: sq * 2 }}>
                 <Svg width={sq * 2} height={sq * 2} viewBox="-50 -50 200 200">
-                  {skin === 'wet' ? <WetSpot seed={s.y * n + s.x} color={color} layer={layer} /> : <ScribbleSpot seed={s.y * n + s.x} color={color} layer={layer} />}
+                  {isWet(skin) ? <WetSpot seed={s.y * n + s.x} skin={skin} color={color} layer={layer} /> : <ScribbleSpot seed={s.y * n + s.x} color={color} layer={layer} />}
                 </Svg>
               </Grow>
             )),
@@ -212,8 +233,8 @@ export function BoardPaint({ n, sq, spots, skin = BOARD_SKIN }: { n: number; sq:
   );
 }
 
-function WetSpot({ seed, color, layer }: { seed: number; color: string; layer: 'ink' | 'fill' }) {
-  const w = wetShape(seed);
+function WetSpot({ seed, skin, color, layer }: { seed: number; skin: WetSkin; color: string; layer: 'ink' | 'fill' }) {
+  const w = wetShape(seed, skin);
   if (layer === 'ink') {
     const ink = { fill: C.ink, stroke: C.ink, strokeWidth: 7, strokeLinejoin: 'round' } as const;
     return (

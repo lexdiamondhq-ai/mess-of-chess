@@ -1,15 +1,17 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
 import { Bouncy } from './Bouncy';
-import { C, F, chunky } from '../theme';
+import { isLight } from './color';
+import { C, F, tight } from '../theme';
 
 interface Props {
   label: string;
   sub?: string;
   onPress?: () => void;
+  /** Ink by default. Pass a paint colour for a loud button, or C.surface for a quiet one. */
   color?: string;
   textColor?: string;
+  /** Shown after the label, e.g. an arrow. */
   icon?: ReactNode;
   size?: 'xl' | 'lg' | 'md' | 'sm';
   style?: StyleProp<ViewStyle>;
@@ -19,49 +21,40 @@ interface Props {
   tilt?: number;
 }
 
-const H = { xl: 82, lg: 68, md: 56, sm: 44 };
-const T = { xl: 34, lg: 26, md: 20, sm: 16 };
+const H = { xl: 72, lg: 64, md: 54, sm: 46 };
+const T = { xl: 28, lg: 22, md: 18, sm: 16 };
+const R = { xl: 24, lg: 22, md: 20, sm: 18 };
+const DRIPS = [
+  { left: '12%', w: 11, h: 16 },
+  { left: '21%', w: 8, h: 9 },
+  { left: '68%', w: 12, h: 22 },
+  { left: '78%', w: 8, h: 12 },
+] as const;
 
-export function MessyButton({ label, sub, onPress, color = C.yellow, textColor = C.ink, icon, size = 'lg', style, drips = false, disabled, tilt }: Props) {
+export function MessyButton({ label, sub, onPress, color = C.ink, textColor, icon, size = 'lg', style, drips = false, disabled, tilt }: Props) {
+  const text = textColor ?? (isLight(color) ? C.ink : C.white);
   return (
-    <Bouncy onPress={onPress} splash={disabled ? undefined : color} disabled={disabled} accessibilityLabel={label} tilt={tilt} style={style}>
-      <View style={[s.btn, { backgroundColor: color, minHeight: H[size], opacity: disabled ? 0.45 : 1 }, chunky(size === 'sm' ? 4 : 7)]}>
-        <View style={s.gloss} />
-        {icon}
-        <View style={{ alignItems: icon ? 'flex-start' : 'center', flexShrink: 1 }}>
-          <Text style={[s.label, { color: textColor, fontSize: T[size] }]} numberOfLines={1} adjustsFontSizeToFit>
+    <Bouncy onPress={onPress} splash={disabled ? undefined : color === C.surface ? C.ink : color} disabled={disabled} accessibilityLabel={label} tilt={tilt} style={style}>
+      {drips &&
+        DRIPS.map((d, i) => (
+          <View key={i} pointerEvents="none" style={[s.drip, { left: d.left, width: d.w, height: d.h + 10, bottom: -d.h, borderRadius: d.w / 2, backgroundColor: color }]} />
+        ))}
+      <View style={[s.btn, { backgroundColor: color, minHeight: H[size], borderRadius: R[size], opacity: disabled ? 0.4 : 1 }]}>
+        <View style={{ alignItems: 'center', flexShrink: 1 }}>
+          <Text style={[s.label, { color: text, fontSize: T[size] }, tight(T[size])]} numberOfLines={1} adjustsFontSizeToFit>
             {label}
           </Text>
-          {sub ? <Text style={[s.sub, { color: textColor }]}>{sub}</Text> : null}
+          {sub ? <Text style={[s.sub, { color: text }]}>{sub}</Text> : null}
         </View>
+        {icon}
       </View>
-      {drips && (
-        <Svg width="100%" height={22} viewBox="0 0 300 22" preserveAspectRatio="none" style={s.drips} pointerEvents="none">
-          <Path
-            d="M40 0 h14 v10 a7 7 0 0 1 -14 0z M120 0 h10 v15 a5 5 0 0 1 -10 0z M210 0 h16 v7 a8 8 0 0 1 -16 0z M252 0 h9 v12 a4.5 4.5 0 0 1 -9 0z"
-            fill={color}
-          />
-        </Svg>
-      )}
     </Bouncy>
   );
 }
 
 const s = StyleSheet.create({
-  btn: {
-    borderRadius: 24,
-    borderWidth: 3,
-    borderColor: C.ink,
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    overflow: 'hidden',
-  },
-  gloss: { position: 'absolute', top: 5, left: 14, right: 14, height: 10, borderRadius: 99, backgroundColor: '#FFFFFF', opacity: 0.35 },
-  label: { fontFamily: F.display, letterSpacing: 0.5 },
-  sub: { fontFamily: F.bold, fontSize: 13, opacity: 0.8, marginTop: -2 },
-  drips: { position: 'absolute', left: 0, right: 0, bottom: -18 },
+  btn: { paddingHorizontal: 20, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
+  label: { fontFamily: F.title },
+  sub: { fontFamily: F.body, fontSize: 13, opacity: 0.75, marginTop: 1 },
+  drip: { position: 'absolute' },
 });

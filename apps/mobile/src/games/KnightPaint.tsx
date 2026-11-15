@@ -6,7 +6,7 @@ import { Shell, type Phase } from './Shell';
 import { buzz } from '../ui/Bouncy';
 import { useStore } from '../store';
 import { SETS } from '../pieces';
-import { C, F } from '../theme';
+import { C, F, fill, lift } from '../theme';
 
 const N = 5;
 const JUMPS = [
@@ -30,8 +30,8 @@ export function KnightPaint() {
   const [at, setAt] = useState(0);
   const [painted, setPainted] = useState<Set<number>>(new Set([0]));
   const [from, setFrom] = useState<{ dx: number; dy: number; n: number } | null>(null);
-  const size = Math.min(width - 36, 420);
-  const cell = (size - 16) / N;
+  const size = Math.floor(Math.min(width - 40, 420) / N) * N;
+  const cell = size / N;
   const moves = hops(at, painted);
 
   function hop(to: number) {
@@ -53,7 +53,7 @@ export function KnightPaint() {
       color={C.slime}
       phase={phase}
       score={painted.size}
-      scoreLabel="SQUARES PAINTED"
+      scoreLabel="Squares painted"
       mess={(s) => Math.min(20, Math.round(s * 0.8))}
       hud={<Text style={s.hud}>{painted.size} / {N * N}</Text>}
       onStart={() => {
@@ -64,19 +64,21 @@ export function KnightPaint() {
       }}
     >
       <View style={[s.board, { width: size, height: size }]}>
-        {Array.from({ length: N * N }, (_, i) => (
-          <View key={`bg${i}`} style={[s.cell, { left: 8 + (i % N) * cell, top: 8 + Math.floor(i / N) * cell, width: cell, height: cell, backgroundColor: ((i % N) + Math.floor(i / N)) % 2 ? C.dark : C.light }]} />
-        ))}
-        {[...painted].map((i) => (
-          <View key={`p${i}`} pointerEvents="none" style={[s.cell, { left: 8 + (i % N) * cell, top: 8 + Math.floor(i / N) * cell, width: cell, height: cell }]}>
-            <Animated.View entering={ZoomIn.springify().damping(9)} style={{ width: cell, height: cell, backgroundColor: set.paint, opacity: 0.82, borderRadius: cell * 0.08 }} />
-          </View>
-        ))}
+        <View style={s.clip} pointerEvents="none">
+          {Array.from({ length: N * N }, (_, i) => (
+            <View key={`bg${i}`} style={[s.cell, { left: (i % N) * cell, top: Math.floor(i / N) * cell, width: cell, height: cell, backgroundColor: ((i % N) + Math.floor(i / N)) % 2 ? C.boardDark : C.boardLight }]} />
+          ))}
+          {[...painted].map((i) => (
+            <View key={`p${i}`} pointerEvents="none" style={[s.cell, { left: (i % N) * cell, top: Math.floor(i / N) * cell, width: cell, height: cell }]}>
+              <Animated.View entering={ZoomIn.springify().damping(9)} style={{ width: cell, height: cell, backgroundColor: set.paint, opacity: 0.82 }} />
+            </View>
+          ))}
+        </View>
         {Array.from({ length: N * N }, (_, i) => {
           const can = moves.includes(i) && phase === 'play';
           return (
             <Pressable key={i} onPress={() => hop(i)} accessibilityLabel={`Square ${i + 1}${can ? ', can hop here' : ''}`}
-              style={[s.cell, { left: 8 + (i % N) * cell, top: 8 + Math.floor(i / N) * cell, width: cell, height: cell }]}>
+              style={[s.cell, { left: (i % N) * cell, top: Math.floor(i / N) * cell, width: cell, height: cell }]}>
               {can && <View style={s.dot} />}
             </Pressable>
           );
@@ -100,16 +102,17 @@ function Knight({ src, cell, x, y, from }: { src: any; cell: number; x: number; 
   }, [from?.n]);
   const st = useAnimatedStyle(() => ({ transform: [{ translateX: tx.value }, { translateY: ty.value - arc.value * cell * 0.4 }, { scale: 1 + arc.value * 0.15 }] }));
   return (
-    <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: 8 + x * cell - cell * 0.1, top: 8 + y * cell - cell * 0.28, width: cell * 1.2, height: cell * 1.2 }, st]}>
+    <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: x * cell - cell * 0.1, top: y * cell - cell * 0.28, width: cell * 1.2, height: cell * 1.2 }, st]}>
       <Image source={src} style={{ width: '100%', height: '100%' }} />
     </Animated.View>
   );
 }
 
 const s = StyleSheet.create({
-  board: { backgroundColor: C.light, borderRadius: 22, borderWidth: 3, borderColor: C.ink },
+  board: { backgroundColor: C.boardLight, borderRadius: 22, ...lift(14) },
+  clip: { ...fill, borderRadius: 22, overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth, borderColor: C.line },
   cell: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
-  dot: { width: '32%', aspectRatio: 1, borderRadius: 99, backgroundColor: C.ink, opacity: 0.4 },
-  hud: { fontFamily: F.display, fontSize: 24, color: C.light },
-  tip: { fontFamily: F.bold, color: C.muted, fontSize: 15, marginTop: 18 },
+  dot: { width: '30%', aspectRatio: 1, borderRadius: 99, backgroundColor: C.ink, opacity: 0.3 },
+  hud: { fontFamily: F.title, fontSize: 22, color: C.ink },
+  tip: { fontFamily: F.body, color: C.gray, fontSize: 15, marginTop: 18 },
 });

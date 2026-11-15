@@ -1,48 +1,42 @@
-// "Fresh Canvas": clean paper, ink-black words, and paint as the only colour.
+// "Poster Pop": sunny yellow, thick ink outlines and hard comic-book shadows.
 export const C = {
   /** Screen background. */
-  paper: '#FBFAF6',
-  /** Tiles, chips and soft buttons. */
-  surface: '#F0EDE5',
+  paper: '#FFD60A',
+  /** Cards, chips and quiet buttons. */
+  surface: '#FFFFFF',
   /** Empty meter tracks and locked things. */
-  track: '#E9E5DB',
-  /** Hairlines around the board and white cards. */
-  line: '#E2DED3',
+  track: '#F3F0E8',
   white: '#FFFFFF',
   ink: '#16161D',
-  /** Secondary text. Passes contrast on paper and on surface. */
-  gray: '#5A5A64',
+  /** Secondary text. Passes contrast on yellow and on white. */
+  gray: '#45454F',
   slime: '#8BE04E',
   goo: '#FF5FA2',
-  yellow: '#FFD23F',
-  sky: '#3DB4FF',
+  yellow: '#FFD60A',
+  sky: '#45B8FF',
   orange: '#FF8A3D',
-  boardLight: '#FFFFFF',
-  boardDark: '#EDEAE1',
+  /** Soft tints for tiles that sit next to the loud colours. */
+  pink: '#FF8FC0',
+  blue: '#7FD0FF',
+  lilac: '#CFC4FF',
   /** Dim layer behind pop-up cards. */
-  scrim: 'rgba(22,22,29,0.45)',
+  scrim: 'rgba(22,22,29,0.55)',
 };
 
 export const F = {
-  /** Huge headlines (40px and up). */
-  display: 'Bricolage-Display',
-  /** Titles, buttons and names. */
-  title: 'Bricolage-Title',
-  bold: 'Bricolage-Bold',
-  body: 'Bricolage-SemiBold',
+  /** Fat rounded headline face: titles, buttons, names and numbers. */
+  display: 'Bagel',
+  title: 'Bagel',
+  /** Small labels. */
+  bold: 'DMSans-ExtraBold',
+  /** Sentences. */
+  body: 'DMSans-Bold',
 };
 
-/** Tight tracking that suits the heavy headline weights. */
-export const tight = (size: number) => ({ letterSpacing: -size * 0.03 });
+/** The thick ink outline every card, button and tile wears. */
+export const edge = (width = 3) => ({ borderWidth: width, borderColor: C.ink }) as const;
 
-/** Soft shadow that lifts the board and pop-up cards off the paper. */
-export const lift = (depth = 14) =>
-  ({
-    shadowColor: C.ink,
-    shadowOffset: { width: 0, height: depth },
-    shadowOpacity: 0.16,
-    shadowRadius: depth * 1.4,
-    elevation: Math.round(depth / 2),
-  }) as const;
+/** A hard, unblurred drop shadow, like a misprinted poster. */
+export const hard = (depth = 4) => ({ boxShadow: `${depth}px ${depth}px 0px ${C.ink}` }) as const;
 
 export const fill = { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 } as const;

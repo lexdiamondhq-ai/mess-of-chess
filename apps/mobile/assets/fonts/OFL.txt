@@ -1,4 +1,8 @@
-Copyright 2022 The Bricolage Grotesque Project Authors (https://github.com/ateliertriay/bricolage)
+Bagel Fat One (BagelFatOne-Latin.ttf, cut down to Latin letters):
+Copyright 2022 The Bagel Fat Project Authors (https://github.com/JAMO-TYPEFACE/BagelFat)
+
+DM Sans (DMSans-Bold.ttf, DMSans-ExtraBold.ttf):
+Copyright 2014 The DM Sans Project Authors (https://github.com/googlefonts/dm-fonts)
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:

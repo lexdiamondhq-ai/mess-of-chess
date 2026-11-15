@@ -4,10 +4,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Bouncy } from './Bouncy';
 import { BackIcon, CloseIcon } from './Icons';
-import { C, F, lift, tight } from '../theme';
+import { C, F, edge, hard } from '../theme';
 import { useNav } from '../nav';
 
-/** A clean sheet of paper with safe-area padding. The paint on top is the only colour. */
+/** A sunny yellow poster with safe-area padding. */
 export function Screen({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   const inset = useSafeAreaInsets();
   return (
@@ -27,7 +27,7 @@ export function Pop({ i = 0, children, style }: { i?: number; children: ReactNod
 }
 
 export function Title({ children, size = 44, color = C.ink, style }: { children: ReactNode; size?: number; color?: string; style?: StyleProp<TextStyle> }) {
-  return <Text style={[{ fontFamily: size >= 40 ? F.display : F.title, fontSize: size, color, lineHeight: size * 1.02 }, tight(size), style]}>{children}</Text>;
+  return <Text style={[{ fontFamily: F.display, fontSize: size, color, lineHeight: Math.round(size * 1.08) }, style]}>{children}</Text>;
 }
 
 export function Body({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) {
@@ -47,7 +47,7 @@ export function Chip({ children, icon, style }: { children: ReactNode; icon?: Re
 export function BackButton({ onPress, icon = 'back' }: { onPress?: () => void; icon?: 'back' | 'close' }) {
   const nav = useNav();
   return (
-    <Bouncy onPress={onPress ?? nav.back} splash={C.ink} accessibilityLabel={icon === 'back' ? 'Back' : 'Close'} style={s.back}>
+    <Bouncy onPress={onPress ?? nav.back} splash={C.goo} accessibilityLabel={icon === 'back' ? 'Back' : 'Close'} style={s.back}>
       <View style={s.backInner}>{icon === 'back' ? <BackIcon /> : <CloseIcon />}</View>
     </Bouncy>
   );
@@ -65,16 +65,16 @@ export function Header({ title, right, icon }: { title: string; right?: ReactNod
   );
 }
 
-/** A soft tile. Pass `raised` for pop-up cards that float over a dimmed screen. */
+/** A white sticker. Pass `raised` for pop-up cards that sit over a dimmed screen. */
 export function Card({ children, style, color = C.surface, raised }: { children: ReactNode; style?: StyleProp<ViewStyle>; color?: string; raised?: boolean }) {
-  return <View style={[s.card, { backgroundColor: raised ? C.paper : color }, raised && lift(18), style]}>{children}</View>;
+  return <View style={[s.card, { backgroundColor: color }, hard(raised ? 7 : 4), style]}>{children}</View>;
 }
 
 const s = StyleSheet.create({
   back: { width: 44, height: 44 },
-  backInner: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center' },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16, minHeight: 44 },
-  card: { borderRadius: 24, padding: 16 },
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 36, paddingHorizontal: 13, borderRadius: 18, backgroundColor: C.surface },
+  backInner: { width: 44, height: 44, borderRadius: 14, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center', ...edge(2.5), ...hard(3) },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 16, minHeight: 44 },
+  card: { borderRadius: 22, padding: 16, ...edge(3) },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 36, paddingHorizontal: 12, borderRadius: 18, backgroundColor: C.surface, ...edge(2.5), ...hard(3) },
   chipText: { fontFamily: F.bold, color: C.ink, fontSize: 14 },
 });

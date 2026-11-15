@@ -11,7 +11,9 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { PaintGame, pickMove, ALL_SQUARES, type BotLevel, type Color, type Square } from 'mess-of-chess-engine';
-import { Screen, BackButton, Title, Card, Body } from '../ui/Screen';
+import { Screen, BackButton, Card, Body, Chip } from '../ui/Screen';
+import { OutlineText } from '../ui/OutlineText';
+import { BOARD_RADIUS, BoardFrame, BoardSquares, paintStyle, tileStyle } from '../ui/Board';
 import { MessyButton } from '../ui/MessyButton';
 import { MeterBar } from '../ui/MeterBar';
 import { Splat } from '../ui/Splat';
@@ -20,7 +22,7 @@ import { buzz } from '../ui/Bouncy';
 import { useNav } from '../nav';
 import { METER_MAX, useStore } from '../store';
 import { SETS, PIECE_NAME, type PieceSet, type PieceType } from '../pieces';
-import { C, F, fill, lift } from '../theme';
+import { C, F, edge, fill, hard } from '../theme';
 
 const ROWS: Square[][] = Array.from({ length: 8 }, (_, row) => ALL_SQUARES.filter((s) => Number(s[1]) === 8 - row));
 const FILES = 'abcdefgh';
@@ -53,7 +55,7 @@ export function Game({ mode, level }: { mode: 'bot' | 'friend'; level: BotLevel 
   const sets: Record<Color, PieceSet> = { w: SETS[store.save.equipped], b: SETS.goo };
   const names: Record<Color, string> = mode === 'bot' ? { w: 'You', b: 'Goo Bot' } : { w: sets.w.name, b: 'Goo' };
 
-  const boardW = Math.floor(Math.min(width - 38, height * 0.5, 520) / 8) * 8;
+  const boardW = Math.floor(Math.min(width - 50, height * 0.5, 520) / 8) * 8;
   const sq = boardW / 8;
 
   const shake = useSharedValue(0);
@@ -91,7 +93,7 @@ export function Game({ mode, level }: { mode: 'bot' | 'friend'; level: BotLevel 
       });
       shakeIt(capturedType === 'q' || capturedType === 'r');
     } else if (r.check) {
-      setHit({ key: Date.now(), kind: 'check', word: 'CHECK', color: C.yellow });
+      setHit({ key: Date.now(), kind: 'check', word: 'CHECK', color: paint });
       shakeIt(false);
     }
     if (r.stolen.length) {
@@ -167,30 +169,28 @@ export function Game({ mode, level }: { mode: 'bot' | 'friend'; level: BotLevel 
   const moveNo = Math.min(game.moveNumber, game.rules.moveLimit);
 
   return (
-    <Screen style={{ paddingHorizontal: 19 }}>
+    <Screen>
       <View style={s.topBar}>
         <BackButton icon="close" onPress={nav.back} />
-        <Text style={s.moveText}>
+        <Chip>
           Move {moveNo} of {game.rules.moveLimit}
-        </Text>
+        </Chip>
         <View style={{ width: 44 }} />
       </View>
 
-      <PaintBar game={game} sets={sets} labels={mode === 'bot' ? { w: 'Your paint', b: 'Goo paint' } : { w: `${names.w} paint`, b: 'Goo paint' }} />
+      <PaintBar game={game} sets={sets} labels={mode === 'bot' ? { w: 'you', b: 'goo' } : { w: names.w.toLowerCase(), b: 'goo' }} />
 
       <View style={s.middle}>
         <PlayerRow color="b" game={game} set={sets.b} name={names.b} sub={mode === 'bot' ? `${level[0].toUpperCase()}${level.slice(1)} level` : undefined} taken={taken.b} enemy={sets.w} thinking={thinking} />
 
-        <Animated.View style={[s.board, { width: boardW, height: boardW }, lift(16), shakeStyle]}>
-          {/* 1. Checker squares, last-move tint and paint, clipped to the rounded board */}
+        <Animated.View style={[{ width: boardW, height: boardW }, shakeStyle]}>
+          <BoardFrame />
+          {/* 1. Squares, last-move tint and paint, clipped to the rounded board */}
           <View style={s.boardClip}>
-            {ROWS.map((r, ri) => (
-              <View key={ri} style={s.row}>
-                {r.map((q, ci) => (
-                  <View key={q} style={{ width: sq, height: sq, backgroundColor: (ri + ci) % 2 === 0 ? C.boardLight : C.boardDark }}>
-                    {last && (last.from === q || last.to === q) && <View style={s.lastMove} />}
-                  </View>
-                ))}
+            <BoardSquares n={8} sq={sq} />
+            {last && [last.from, last.to].map((q) => (
+              <View key={q} pointerEvents="none" style={[s.cell, { left: col(q) * sq, top: row(q) * sq, width: sq, height: sq }]}>
+                <View style={[tileStyle(sq), s.lastMove]} />
               </View>
             ))}
             {ALL_SQUARES.map((q) => {
@@ -202,9 +202,12 @@ export function Game({ mode, level }: { mode: 'bot' | 'friend'; level: BotLevel 
                 </View>
               );
             })}
-            {picked && <View pointerEvents="none" style={[s.cell, s.ring, { left: col(picked) * sq, top: row(picked) * sq, width: sq, height: sq }]} />}
+            {picked && (
+              <View pointerEvents="none" style={[s.cell, { left: col(picked) * sq, top: row(picked) * sq, width: sq, height: sq }]}>
+                <View style={[tileStyle(sq), s.ring]} />
+              </View>
+            )}
           </View>
-          <View pointerEvents="none" style={s.boardEdge} />
           {/* 2. Pieces, the one that just moved drawn on top. They may poke over the board edge. */}
           {ALL_SQUARES.map((q) => game.pieceAt(q) && q)
             .filter((q): q is Square => Boolean(q))
@@ -256,7 +259,7 @@ export function Game({ mode, level }: { mode: 'bot' | 'friend'; level: BotLevel 
         <EndCard
           title={result.winner ? (mode === 'bot' ? (result.winner === 'w' ? 'You win!' : 'Goo wins') : `${names[result.winner]} wins!`) : 'Paint tie!'}
           reason={result.reason === 'checkmate' ? 'by checkmate' : result.reason === 'most-paint' ? `most paint, ${game.score('w')} to ${game.score('b')}` : 'nobody wins, everybody’s messy'}
-          color={result.winner ? sets[result.winner].paint : C.yellow}
+          color={result.winner ? sets[result.winner].paint : C.sky}
           meterColor={sets.w.paint}
           before={reward.before}
           gained={reward.gained}
@@ -312,8 +315,8 @@ function PaintSpot({ color, fresh, size }: { color: string; fresh: boolean; size
     g.value = 0;
     g.value = withSpring(1, { damping: 11, stiffness: 190 });
   }, [fresh, color]);
-  const st = useAnimatedStyle(() => ({ transform: [{ scale: 0.3 + Math.min(1, g.value) * 0.7 }], opacity: Math.min(1, g.value * 2) * 0.82 }));
-  return <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: 0, top: 0, width: size, height: size, backgroundColor: color }, st]} />;
+  const st = useAnimatedStyle(() => ({ transform: [{ scale: 0.3 + Math.min(1, g.value) * 0.7 }], opacity: Math.min(1, g.value * 2) }));
+  return <Animated.View pointerEvents="none" style={[paintStyle(size, color), st]} />;
 }
 
 /** The score: two big numbers and one line of paint split between the players. */
@@ -323,23 +326,23 @@ function PaintBar({ game, sets, labels }: { game: PaintGame; sets: Record<Color,
   const total = Math.max(1, w + b);
   const wf = useSharedValue(0.5);
   useEffect(() => {
-    wf.value = withSpring(w + b === 0 ? 0.5 : Math.max(0.08, Math.min(0.92, w / total)), { damping: 14, stiffness: 120 });
+    wf.value = withSpring(w + b === 0 ? 0.5 : Math.max(0.3, Math.min(0.7, w / total)), { damping: 14, stiffness: 120 });
   }, [w, b]);
   const left = useAnimatedStyle(() => ({ width: `${wf.value * 100}%` }));
   return (
     <View style={s.score} accessibilityLabel={`Paint, ${w} to ${b}`}>
-      <Text style={s.scoreNum}>{w}</Text>
-      <View style={{ flex: 1, gap: 6 }}>
-        <View style={s.scoreBar}>
-          <Animated.View style={[s.scoreLeft, { backgroundColor: sets.w.paint }, left]} />
-          <View style={[s.scoreRight, { backgroundColor: sets.b.paint }]} />
-        </View>
-        <View style={s.scoreLabels}>
-          <Text style={s.scoreLabel}>{labels.w}</Text>
-          <Text style={s.scoreLabel}>{labels.b}</Text>
-        </View>
+      <Animated.View style={[s.scoreSide, s.scoreLeft, { backgroundColor: sets.w.paint }, left]}>
+        <Text style={[s.scoreNum, { color: sets.w.on }]}>{w}</Text>
+        <Text style={[s.scoreLabel, { color: sets.w.on }]} numberOfLines={1}>
+          {labels.w}
+        </Text>
+      </Animated.View>
+      <View style={[s.scoreSide, s.scoreRight, { backgroundColor: sets.b.paint }]}>
+        <Text style={[s.scoreLabel, { color: sets.b.on }]} numberOfLines={1}>
+          {labels.b}
+        </Text>
+        <Text style={[s.scoreNum, { color: sets.b.on }]}>{b}</Text>
       </View>
-      <Text style={s.scoreNum}>{b}</Text>
     </View>
   );
 }
@@ -348,7 +351,7 @@ function PlayerRow({ color, game, set, name, sub, taken, enemy, thinking }: { co
   const active = game.turn === color && !game.result.over;
   return (
     <View style={s.player}>
-      <View style={[s.avatar, { backgroundColor: `${set.paint}4D` }]}>
+      <View style={[s.avatar, { backgroundColor: set.paint }]}>
         <Image source={set.art.k} style={{ width: 38, height: 38 }} />
       </View>
       <View style={{ flex: 1, gap: 1 }}>
@@ -370,8 +373,7 @@ function PlayerRow({ color, game, set, name, sub, taken, enemy, thinking }: { co
       </View>
       {active && (
         <Animated.View entering={FadeIn} style={s.turnTag}>
-          <View style={[s.turnDot, { backgroundColor: set.paint }]} />
-          <Text style={s.turn}>{game.inCheck() ? 'In check!' : thinking ? 'Thinking…' : 'Your move'}</Text>
+          <Text style={s.turn}>{game.inCheck() ? 'In check!' : thinking ? 'Thinking…' : 'Your move!'}</Text>
         </Animated.View>
       )}
     </View>
@@ -394,24 +396,24 @@ function EndCard(props: {
   return (
     <Animated.View entering={FadeIn.duration(250)} style={[StyleSheet.absoluteFill, s.endWrap]}>
       <Animated.View entering={ZoomIn.springify().damping(12)} style={s.endSplat}>
-        <Splat color={props.color} size={width * 1.5} seed={404} arms={8} dots={8} drips={3} />
+        <Splat color={props.color} size={width * 1.5} seed={404} arms={8} dots={8} outline={3} />
       </Animated.View>
       <Animated.View entering={ZoomIn.delay(120).springify().damping(13)} style={{ width: '100%' }}>
         <Card raised style={{ alignItems: 'center', gap: 6, paddingVertical: 24, paddingHorizontal: 20 }}>
-          <Title size={48} style={{ textAlign: 'center' }}>
+          <OutlineText size={46} color={props.color} stroke={2.5} drop={4} align="center" style={{ alignSelf: 'stretch' }}>
             {props.title}
-          </Title>
+          </OutlineText>
           <Body style={{ textAlign: 'center', marginBottom: 10 }}>{props.reason}</Body>
           <View style={{ width: '100%', gap: 8 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
               <Text style={s.endLabel}>Messy Meter</Text>
               <Text style={s.endGain}>+{props.gained}</Text>
             </View>
-            <MeterBar value={(props.before + props.gained) / METER_MAX} delay={350} color={props.meterColor} />
+            <MeterBar value={(props.before + props.gained) / METER_MAX} delay={350} />
           </View>
-          {full ? <MessyButton label="Meter full! Open it" size="md" color={props.meterColor} style={{ alignSelf: 'stretch', marginTop: 18 }} onPress={props.onMeter} /> : null}
+          {full ? <MessyButton label="Meter full! Open it" size="md" color={C.goo} style={{ alignSelf: 'stretch', marginTop: 18 }} onPress={props.onMeter} /> : null}
           <View style={{ flexDirection: 'row', gap: 10, marginTop: full ? 10 : 18, alignSelf: 'stretch' }}>
-            <MessyButton label="Rematch" size="md" style={{ flex: 1 }} onPress={props.onRematch} />
+            <MessyButton label="Rematch" size="md" color={props.meterColor} style={{ flex: 1 }} onPress={props.onRematch} />
             <MessyButton label="Home" size="md" color={C.surface} tilt={1.5} style={{ flex: 1 }} onPress={props.onHome} />
           </View>
         </Card>
@@ -422,39 +424,33 @@ function EndCard(props: {
 
 const s = StyleSheet.create({
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
-  moveText: { color: C.gray, fontFamily: F.bold, fontSize: 15 },
-  score: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 14 },
-  scoreNum: { fontFamily: F.display, fontSize: 40, lineHeight: 42, color: C.ink, letterSpacing: -1.5, minWidth: 26, textAlign: 'center' },
-  scoreBar: { flexDirection: 'row', gap: 3, height: 16 },
-  scoreLeft: { borderTopLeftRadius: 8, borderBottomLeftRadius: 8, borderTopRightRadius: 3, borderBottomRightRadius: 3 },
-  scoreRight: { flex: 1, borderTopRightRadius: 8, borderBottomRightRadius: 8, borderTopLeftRadius: 3, borderBottomLeftRadius: 3 },
-  scoreLabels: { flexDirection: 'row', justifyContent: 'space-between' },
-  scoreLabel: { fontFamily: F.bold, fontSize: 13, color: C.gray },
-  middle: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 14 },
-  board: { backgroundColor: C.boardLight, borderRadius: 20 },
-  boardClip: { ...fill, borderRadius: 20, overflow: 'hidden' },
-  boardEdge: { ...fill, borderRadius: 20, borderWidth: 1.5, borderColor: C.line },
-  row: { flexDirection: 'row' },
+  score: { flexDirection: 'row', height: 42, borderRadius: 21, overflow: 'hidden', marginTop: 16, backgroundColor: C.ink, ...edge(3), ...hard(4) },
+  scoreSide: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 12, overflow: 'hidden' },
+  scoreLeft: { borderRightWidth: 3, borderColor: C.ink },
+  scoreRight: { flex: 1, justifyContent: 'flex-end' },
+  scoreNum: { fontFamily: F.display, fontSize: 23, lineHeight: 27 },
+  scoreLabel: { fontFamily: F.bold, fontSize: 13, flexShrink: 1 },
+  middle: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 16 },
+  boardClip: { ...fill, borderRadius: BOARD_RADIUS - 3, overflow: 'hidden' },
   cell: { position: 'absolute' },
   square: { alignItems: 'center', justifyContent: 'center' },
-  lastMove: { ...fill, backgroundColor: C.yellow, opacity: 0.4 },
-  ring: { borderWidth: 3.5, borderColor: C.ink },
-  target: { position: 'absolute', width: '30%', aspectRatio: 1, borderRadius: 999, backgroundColor: C.ink, opacity: 0.3, zIndex: 9 },
-  targetCapture: { width: '86%', backgroundColor: 'transparent', borderWidth: 4, borderColor: C.ink, opacity: 0.3 },
+  lastMove: { backgroundColor: C.yellow },
+  ring: { backgroundColor: C.white, ...edge(3.5) },
+  target: { position: 'absolute', width: '34%', aspectRatio: 1, borderRadius: 999, backgroundColor: C.white, zIndex: 9, ...edge(3) },
+  targetCapture: { width: '88%', backgroundColor: 'transparent', borderWidth: 4, borderColor: C.ink },
   pieceBox: { position: 'absolute', left: '-6%', right: '-6%', top: '-13%', bottom: '1%' },
   pieceImg: { width: '100%', height: '100%' },
-  note: { backgroundColor: C.surface, borderRadius: 20, paddingHorizontal: 18, minHeight: 56, justifyContent: 'center', marginTop: 10 },
+  note: { backgroundColor: C.surface, borderRadius: 20, paddingHorizontal: 18, minHeight: 56, justifyContent: 'center', marginTop: 10, ...edge(3), ...hard(4) },
   noteText: { color: C.ink, fontSize: 16, fontFamily: F.bold, textAlign: 'center' },
-  player: { flexDirection: 'row', alignItems: 'center', gap: 10, alignSelf: 'stretch', minHeight: 44 },
-  avatar: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  playerName: { color: C.ink, fontFamily: F.title, fontSize: 17, letterSpacing: -0.3 },
-  playerSub: { color: C.gray, fontFamily: F.body, fontSize: 13 },
+  player: { flexDirection: 'row', alignItems: 'center', gap: 10, alignSelf: 'stretch', minHeight: 46 },
+  avatar: { width: 46, height: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center', ...edge(2.5) },
+  playerName: { color: C.ink, fontFamily: F.title, fontSize: 21, lineHeight: 24 },
+  playerSub: { color: C.ink, fontFamily: F.bold, fontSize: 13 },
   taken: { flexDirection: 'row', alignItems: 'center', minHeight: 20 },
-  turnTag: { flexDirection: 'row', alignItems: 'center', gap: 7, height: 34, borderRadius: 17, paddingHorizontal: 14, backgroundColor: C.ink },
-  turnDot: { width: 8, height: 8, borderRadius: 4 },
-  turn: { fontFamily: F.title, fontSize: 14, color: C.white },
+  turnTag: { height: 36, borderRadius: 18, paddingHorizontal: 14, backgroundColor: C.white, justifyContent: 'center', transform: [{ rotate: '-4deg' }], ...edge(2.5), ...hard(3) },
+  turn: { fontFamily: F.title, fontSize: 16, lineHeight: 19, color: C.ink },
   endWrap: { backgroundColor: C.scrim, alignItems: 'center', justifyContent: 'center', padding: 22 },
   endSplat: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
-  endLabel: { fontFamily: F.title, color: C.ink, fontSize: 16 },
-  endGain: { fontFamily: F.title, color: C.ink, fontSize: 16 },
+  endLabel: { fontFamily: F.title, color: C.ink, fontSize: 18 },
+  endGain: { fontFamily: F.title, color: C.ink, fontSize: 18 },
 });

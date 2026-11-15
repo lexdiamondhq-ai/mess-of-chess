@@ -4,15 +4,14 @@ import type { BotLevel } from 'mess-of-chess-engine';
 import { Screen, Header, Pop, Card, Body } from '../ui/Screen';
 import { MessyButton } from '../ui/MessyButton';
 import { Bouncy } from '../ui/Bouncy';
-import { ArrowIcon } from '../ui/Icons';
 import { useNav } from '../nav';
 import { useStore } from '../store';
 import { SETS } from '../pieces';
-import { C, F } from '../theme';
+import { C, F, edge, hard } from '../theme';
 
 const LEVELS: { id: BotLevel; label: string; blurb: string; color: string }[] = [
   { id: 'easy', label: 'Easy', blurb: 'Tips paint everywhere', color: C.slime },
-  { id: 'messy', label: 'Messy', blurb: 'Grabs what it can', color: C.yellow },
+  { id: 'messy', label: 'Messy', blurb: 'Grabs what it can', color: C.orange },
   { id: 'mean', label: 'Mean', blurb: 'Thinks a move ahead', color: C.goo },
 ];
 
@@ -31,7 +30,7 @@ export function PlaySetup() {
           <View style={s.ruleRow}>
             <Image source={mine.art.n} style={s.ruleImg} />
             <Text style={s.ruleBig}>
-              Normal chess, but every square you land on gets <Text style={{ backgroundColor: mine.paint, color: mine.on }}>{'\u00A0your\u00A0paint\u00A0'}</Text>.
+              Normal chess, but every square you land on gets <Text style={{ backgroundColor: mine.paint, color: mine.on }}>{' your paint '}</Text>.
             </Text>
           </View>
           <Body>Checkmate wins. No checkmate after 30 moves? The most paint wins.</Body>
@@ -45,16 +44,16 @@ export function PlaySetup() {
             const on = level === l.id;
             return (
               <Bouncy key={l.id} onPress={() => setLevel(l.id)} splash={l.color} tilt={i - 1} style={{ flex: 1 }} accessibilityLabel={`${l.label} bot${on ? ', picked' : ''}`}>
-                <View style={[s.level, on && { backgroundColor: C.ink }]}>
-                  <View style={[s.levelDot, { backgroundColor: l.color }]} />
-                  <Text style={[s.levelName, on && { color: C.white }]}>{l.label}</Text>
-                  <Text style={[s.levelBlurb, on && { color: C.white, opacity: 0.75 }]}>{l.blurb}</Text>
+                <View style={[s.level, on ? [{ backgroundColor: l.color }, hard(5)] : hard(3)]}>
+                  <View style={[s.levelDot, { backgroundColor: on ? C.white : l.color }]} />
+                  <Text style={s.levelName}>{l.label}</Text>
+                  <Text style={s.levelBlurb}>{l.blurb}</Text>
                 </View>
               </Bouncy>
             );
           })}
         </View>
-        <MessyButton label="Play the bot" size="lg" icon={<ArrowIcon size={22} color={mine.paint} />} style={{ marginTop: 14 }} onPress={() => nav.go({ name: 'game', mode: 'bot', level })} />
+        <MessyButton label="Play the bot" size="lg" color={mine.paint} style={{ marginTop: 18 }} onPress={() => nav.go({ name: 'game', mode: 'bot', level })} />
       </Pop>
 
       <View style={{ flex: 1 }} />
@@ -71,11 +70,11 @@ const s = StyleSheet.create({
   rules: { gap: 12 },
   ruleRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   ruleImg: { width: 62, height: 62 },
-  ruleBig: { flex: 1, fontFamily: F.title, color: C.ink, fontSize: 18, lineHeight: 25, letterSpacing: -0.3 },
-  section: { fontFamily: F.title, color: C.ink, fontSize: 16, marginBottom: 10 },
-  levels: { flexDirection: 'row', gap: 10 },
-  level: { borderRadius: 20, backgroundColor: C.surface, padding: 12, minHeight: 104, justifyContent: 'flex-end', gap: 2 },
-  levelDot: { position: 'absolute', top: 12, left: 12, width: 14, height: 14, borderRadius: 7 },
-  levelName: { fontFamily: F.title, fontSize: 20, color: C.ink, letterSpacing: -0.4 },
-  levelBlurb: { fontFamily: F.body, fontSize: 12, lineHeight: 15, color: C.gray },
+  ruleBig: { flex: 1, fontFamily: F.bold, color: C.ink, fontSize: 18, lineHeight: 25 },
+  section: { fontFamily: F.title, color: C.ink, fontSize: 20, marginBottom: 10 },
+  levels: { flexDirection: 'row', gap: 12 },
+  level: { borderRadius: 18, backgroundColor: C.surface, padding: 11, minHeight: 108, justifyContent: 'flex-end', gap: 2, ...edge(3) },
+  levelDot: { position: 'absolute', top: 11, left: 11, width: 16, height: 16, borderRadius: 8, ...edge(2.5) },
+  levelName: { fontFamily: F.title, fontSize: 21, lineHeight: 24, color: C.ink },
+  levelBlurb: { fontFamily: F.bold, fontSize: 12, lineHeight: 15, color: C.ink },
 });

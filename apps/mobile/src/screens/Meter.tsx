@@ -13,14 +13,15 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
-import { Screen, Header, Pop, Card, Body, Title } from '../ui/Screen';
+import { Screen, Header, Pop, Card, Body } from '../ui/Screen';
+import { OutlineText } from '../ui/OutlineText';
 import { MessyButton } from '../ui/MessyButton';
 import { Bouncy, buzz } from '../ui/Bouncy';
 import { Splat } from '../ui/Splat';
 import { useNav } from '../nav';
 import { METER_MAX, useStore } from '../store';
 import { SETS, type PieceType, type SetId } from '../pieces';
-import { C, F, fill, lift } from '../theme';
+import { C, F, edge, fill, hard } from '../theme';
 
 const TAPS = 8;
 const EARN = [
@@ -83,7 +84,6 @@ export function MeterScreen() {
       <Pop i={0} style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
         <Bouncy onPress={smash} disabled={!full || !!won} accessibilityLabel={full ? 'Splat the meter open' : 'Messy Meter jar'}>
           <Animated.View style={[{ width: jarW, height: jarH }, jar]}>
-            <View style={[s.jarShadow, lift(18)]} />
             <View style={s.jar}>
               <Animated.View style={[s.fill, fill]}>
                 <Animated.View style={[s.waveRow, waveStyle]}>
@@ -103,7 +103,7 @@ export function MeterScreen() {
               {/* Cracks appear as you tap */}
               <Svg width="100%" height="100%" viewBox="0 0 100 110" style={StyleSheet.absoluteFill} pointerEvents="none">
                 {CRACKS.slice(0, Math.ceil((taps / TAPS) * CRACKS.length)).map((d, i) => (
-                  <Path key={i} d={d} stroke={C.ink} strokeWidth={1.4} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                  <Path key={i} d={d} stroke={C.ink} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
                 ))}
               </Svg>
               <View style={s.jarGloss} />
@@ -132,20 +132,20 @@ export function MeterScreen() {
               </View>
             ))}
           </Card>
-          <MessyButton label="Go make a mess" size="lg" style={{ marginTop: 14 }} onPress={() => nav.replace({ name: 'play' })} />
+          <MessyButton label="Go make a mess" size="lg" style={{ marginTop: 18 }} onPress={() => nav.replace({ name: 'play' })} />
         </Pop>
       )}
 
       {won && (
         <Animated.View entering={FadeIn.duration(120)} style={[StyleSheet.absoluteFill, s.revealWrap]}>
           <Animated.View entering={ZoomIn.springify().damping(8)} style={s.revealSplat}>
-            <Splat color={reward?.paint ?? C.yellow} size={width * 2.9} seed={77} arms={9} dots={10} />
+            <Splat color={reward?.paint ?? C.goo} size={width * 2.9} seed={77} arms={9} dots={10} outline={1.5} />
           </Animated.View>
           <Animated.View entering={ZoomIn.delay(250).springify().damping(10)} style={{ width: '100%', paddingHorizontal: 22 }}>
             <Card raised style={{ alignItems: 'center', gap: 8, paddingVertical: 26, paddingHorizontal: 20 }}>
-              <Title size={44} style={{ textAlign: 'center' }}>
+              <OutlineText size={42} color={reward?.paint ?? C.goo} stroke={2.5} drop={4} align="center" style={{ alignSelf: 'stretch' }}>
                 {reward ? 'New pieces!' : 'Splat!'}
-              </Title>
+              </OutlineText>
               {reward ? (
                 <>
                   <View style={[s.rewardName, { backgroundColor: reward.paint }]}>
@@ -162,6 +162,7 @@ export function MeterScreen() {
                   <MessyButton
                     label="Use them"
                     size="md"
+                    color={reward.paint}
                     style={{ alignSelf: 'stretch', marginTop: 8 }}
                     onPress={() => {
                       store.update(() => ({ equipped: reward.id }));
@@ -182,7 +183,7 @@ export function MeterScreen() {
 }
 
 function MiniSplats({ taps, size }: { taps: number; size: number }) {
-  const colors = [C.slime, C.goo, C.yellow, C.sky, C.orange];
+  const colors = [C.slime, C.goo, C.white, C.sky, C.orange];
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       {Array.from({ length: taps }, (_, i) => {
@@ -193,7 +194,7 @@ function MiniSplats({ taps, size }: { taps: number; size: number }) {
             entering={ZoomIn.springify().damping(6)}
             style={{ position: 'absolute', left: size / 2 + Math.cos(a) * size * 0.55 - 30, top: size * 0.55 + Math.sin(a) * size * 0.55 - 30 }}
           >
-            <Splat color={colors[i % colors.length]} size={70} seed={i * 17 + 5} />
+            <Splat color={colors[i % colors.length]} size={70} seed={i * 17 + 5} outline={7} />
           </Animated.View>
         );
       })}
@@ -219,21 +220,20 @@ const CRACKS = [
 ];
 
 const s = StyleSheet.create({
-  jarShadow: { position: 'absolute', left: 14, right: 14, top: 40, bottom: 6, borderRadius: 46, backgroundColor: C.white },
-  jar: { flex: 1, marginTop: 18, borderRadius: 46, borderWidth: 2, borderColor: C.line, backgroundColor: C.white, overflow: 'hidden', justifyContent: 'flex-end' },
+  jar: { flex: 1, marginTop: 18, borderRadius: 40, backgroundColor: C.white, overflow: 'hidden', justifyContent: 'flex-end', ...edge(3.5), ...hard(7) },
   fill: { width: '100%' },
   waveRow: { position: 'absolute', top: 0, left: 0 },
   mystery: { ...fill, alignItems: 'center', justifyContent: 'center' },
-  jarGloss: { position: 'absolute', left: 16, top: 22, width: 14, height: '50%', borderRadius: 99, backgroundColor: C.white, opacity: 0.45 },
-  lid: { position: 'absolute', top: 0, left: '18%', right: '18%', height: 30, borderRadius: 12, backgroundColor: C.ink },
-  pct: { fontFamily: F.title, fontSize: 28, color: C.ink, marginTop: 20, letterSpacing: -0.7 },
-  cardTitle: { fontFamily: F.title, color: C.ink, fontSize: 18, letterSpacing: -0.3 },
+  jarGloss: { position: 'absolute', left: 14, top: 26, width: 12, height: '42%', borderRadius: 99, backgroundColor: C.white, opacity: 0.6 },
+  lid: { position: 'absolute', top: 0, left: '16%', right: '16%', height: 32, borderRadius: 12, backgroundColor: C.goo, ...edge(3.5), ...hard(4) },
+  pct: { fontFamily: F.title, fontSize: 30, lineHeight: 36, color: C.ink, marginTop: 22 },
+  cardTitle: { fontFamily: F.title, color: C.ink, fontSize: 19, lineHeight: 23 },
   earnRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  earnWhat: { fontFamily: F.body, color: C.gray, fontSize: 16 },
-  earnAmt: { fontFamily: F.title, color: C.ink, fontSize: 16 },
+  earnWhat: { fontFamily: F.body, color: C.ink, fontSize: 16 },
+  earnAmt: { fontFamily: F.title, color: C.ink, fontSize: 17 },
   revealWrap: { backgroundColor: C.scrim, alignItems: 'center', justifyContent: 'center' },
   revealSplat: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
-  rewardName: { borderRadius: 14, paddingHorizontal: 14, paddingVertical: 4, transform: [{ rotate: '-2deg' }] },
-  rewardNameText: { fontFamily: F.title, fontSize: 24, letterSpacing: -0.5 },
+  rewardName: { borderRadius: 14, paddingHorizontal: 14, paddingVertical: 2, transform: [{ rotate: '-2deg' }], ...edge(2.5), ...hard(3) },
+  rewardNameText: { fontFamily: F.title, fontSize: 24, lineHeight: 30 },
   pieceRow: { flexDirection: 'row', gap: 2, marginVertical: 6 },
 });

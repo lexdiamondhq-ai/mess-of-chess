@@ -123,7 +123,7 @@ function Pot({ cell, pop }: { cell: number; pop: Pop | null }) {
       <View style={[s.rim, { top: mouthY - mouthH / 2, height: mouthH, left: cell * 0.03, right: cell * 0.03, borderRadius: cell }]} />
       {pop?.hit && (
         <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center', top: -cell * 0.2 }]}>
-          <Splat color={pop.set === 'goo' ? SETS.goo.paint : C.ink} size={cell * 1.4} seed={pop.id * 13} />
+          <Splat color={pop.set === 'goo' ? SETS.goo.paint : C.white} size={cell * 1.4} seed={pop.id * 13} outline={6} />
         </View>
       )}
     </View>
@@ -153,9 +153,9 @@ function Popper({ pop, cell }: { pop: Pop; cell: number }) {
 const s = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 22, justifyContent: 'center' },
   mouth: { position: 'absolute', backgroundColor: C.ink },
-  rim: { position: 'absolute', borderWidth: 4, borderColor: C.line, backgroundColor: 'transparent' },
-  potFront: { position: 'absolute', backgroundColor: C.white, overflow: 'hidden', borderWidth: 1.5, borderTopWidth: 0, borderColor: C.line },
-  potBand: { position: 'absolute', left: 0, right: 0, backgroundColor: C.goo },
+  rim: { position: 'absolute', borderWidth: 3, borderColor: C.ink, backgroundColor: 'transparent' },
+  potFront: { position: 'absolute', backgroundColor: C.white, overflow: 'hidden', borderWidth: 3, borderTopWidth: 0, borderColor: C.ink },
+  potBand: { position: 'absolute', left: 0, right: 0, backgroundColor: C.goo, borderTopWidth: 3, borderBottomWidth: 3, borderColor: C.ink },
   timer: { fontFamily: F.title, fontSize: 26, color: C.ink },
-  legend: { fontFamily: F.body, color: C.gray, fontSize: 14, marginTop: 24, textAlign: 'center' },
+  legend: { fontFamily: F.bold, color: C.ink, fontSize: 14, marginTop: 24, textAlign: 'center' },
 });

@@ -49,10 +49,9 @@ function Root() {
 
 export default function App() {
   const [fonts] = useFonts({
-    'Bricolage-Display': require('./assets/fonts/Bricolage-Display-ExtraBold.ttf'),
-    'Bricolage-Title': require('./assets/fonts/Bricolage-Title-ExtraBold.ttf'),
-    'Bricolage-Bold': require('./assets/fonts/Bricolage-Bold.ttf'),
-    'Bricolage-SemiBold': require('./assets/fonts/Bricolage-SemiBold.ttf'),
+    Bagel: require('./assets/fonts/BagelFatOne-Latin.ttf'),
+    'DMSans-Bold': require('./assets/fonts/DMSans-Bold.ttf'),
+    'DMSans-ExtraBold': require('./assets/fonts/DMSans-ExtraBold.ttf'),
   });
   return (
     <SafeAreaProvider>

@@ -2,13 +2,12 @@ import { Image, ScrollView, StyleSheet, Text, View, useWindowDimensions } from '
 import Animated, { ZoomIn } from 'react-native-reanimated';
 import { Screen, Header, Pop, Body, Chip } from '../ui/Screen';
 import { Bouncy } from '../ui/Bouncy';
-import { Splat } from '../ui/Splat';
 import { Bob } from '../ui/Bob';
 import { LockIcon } from '../ui/Icons';
 import { useNav } from '../nav';
 import { METER_MAX, useStore } from '../store';
 import { PLAYER_SETS, SETS, type PieceType } from '../pieces';
-import { C, F } from '../theme';
+import { C, F, edge, hard } from '../theme';
 
 const ORDER: PieceType[] = ['p', 'n', 'b', 'r', 'q', 'k'];
 
@@ -17,7 +16,7 @@ export function Pieces() {
   const store = useStore();
   const { width } = useWindowDimensions();
   const cur = SETS[store.save.equipped];
-  const cardW = (width - 40 - 12) / 2;
+  const cardW = (width - 40 - 14 - 6) / 2;
   const owned = store.save.owned.length;
 
   return (
@@ -32,10 +31,7 @@ export function Pieces() {
       />
 
       <Pop i={0}>
-        <View style={s.showcase}>
-          <View style={s.showSplat}>
-            <Splat color={cur.paint} size={width * 0.95} seed={12} arms={7} />
-          </View>
+        <View style={[s.showcase, { backgroundColor: cur.paint }]}>
           <View style={s.showRow}>
             {ORDER.map((t, i) => (
               <Bob key={`${cur.id}${t}`} delay={i * 120} amount={5} tilt={5}>
@@ -45,7 +41,9 @@ export function Pieces() {
               </Bob>
             ))}
           </View>
-          <Text style={s.showName}>{cur.name}</Text>
+          <View style={s.showTag}>
+            <Text style={s.showName}>{cur.name}</Text>
+          </View>
         </View>
       </Pop>
 
@@ -62,7 +60,7 @@ export function Pieces() {
                 tilt={i % 2 ? 2 : -2}
                 accessibilityLabel={have ? `Use ${set.name}` : `${set.name}, locked`}
               >
-                <View style={[s.card, { width: cardW }, on && { borderColor: C.ink }]}>
+                <View style={[s.card, { width: cardW }, on ? [{ backgroundColor: C.blue }, hard(5)] : hard(3)]}>
                   <View style={[s.swatch, { backgroundColor: have ? set.paint : C.track }]}>
                     <Image source={set.art.k} style={[s.cardImg, !have && { tintColor: C.gray, opacity: 0.35 }]} />
                   </View>
@@ -70,9 +68,8 @@ export function Pieces() {
                     {set.name}
                   </Text>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    {!have && <LockIcon size={12} />}
-                    {on && <View style={[s.onDot, { backgroundColor: set.paint }]} />}
-                    <Text style={[s.cardSub, on && { color: C.ink, fontFamily: F.bold }]}>{on ? 'Playing' : have ? 'Tap to use' : 'Fill the meter'}</Text>
+                    {!have && <LockIcon size={12} color={C.ink} />}
+                                        <Text style={s.cardSub}>{on ? 'Playing' : have ? 'Tap to use' : 'Fill the meter'}</Text>
                   </View>
                 </View>
               </Bouncy>
@@ -80,7 +77,7 @@ export function Pieces() {
           );
         })}
       </ScrollView>
-      <Body style={{ textAlign: 'center', marginTop: 8, fontSize: 14 }}>
+      <Body style={{ textAlign: 'center', marginTop: 8, fontSize: 14, color: C.ink }}>
         Fill the Messy Meter to unlock the next set ({Math.round((store.save.meter / METER_MAX) * 100)}% now)
       </Body>
     </Screen>
@@ -88,15 +85,14 @@ export function Pieces() {
 }
 
 const s = StyleSheet.create({
-  showcase: { backgroundColor: C.white, borderRadius: 28, borderWidth: 1.5, borderColor: C.line, paddingVertical: 18, alignItems: 'center', overflow: 'hidden' },
-  showSplat: { position: 'absolute', top: -50, opacity: 0.3 },
+  showcase: { borderRadius: 24, paddingTop: 16, paddingBottom: 14, alignItems: 'center', overflow: 'hidden', ...edge(3), ...hard(5) },
   showRow: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 8 },
-  showName: { fontFamily: F.title, fontSize: 26, color: C.ink, marginTop: 8, letterSpacing: -0.6 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingBottom: 16 },
-  card: { backgroundColor: C.surface, borderRadius: 24, borderWidth: 2.5, borderColor: C.surface, padding: 8, alignItems: 'center' },
-  swatch: { width: '100%', aspectRatio: 1.5, borderRadius: 16, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  showTag: { backgroundColor: C.white, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 2, marginTop: 10, transform: [{ rotate: '-2deg' }], ...edge(2.5), ...hard(3) },
+  showName: { fontFamily: F.title, fontSize: 22, lineHeight: 28, color: C.ink },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, paddingBottom: 16, paddingRight: 6 },
+  card: { backgroundColor: C.surface, borderRadius: 20, padding: 7, paddingBottom: 9, alignItems: 'center', ...edge(3) },
+  swatch: { width: '100%', aspectRatio: 1.5, borderRadius: 12, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', ...edge(2.5) },
   cardImg: { width: '70%', height: '100%', resizeMode: 'contain' },
-  cardName: { fontFamily: F.title, color: C.ink, fontSize: 18, marginTop: 8, letterSpacing: -0.4 },
-  cardSub: { fontFamily: F.body, color: C.gray, fontSize: 13 },
-  onDot: { width: 8, height: 8, borderRadius: 4, marginRight: 2 },
+  cardName: { fontFamily: F.title, color: C.ink, fontSize: 18, lineHeight: 22, marginTop: 6 },
+  cardSub: { fontFamily: F.bold, color: C.ink, fontSize: 13 },
 });

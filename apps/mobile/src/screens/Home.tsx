@@ -1,21 +1,21 @@
 import { useState } from 'react';
 import { Image, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
 import { Screen, Pop, Chip } from '../ui/Screen';
 import { MessyButton } from '../ui/MessyButton';
 import { MeterBar } from '../ui/MeterBar';
 import { Bouncy } from '../ui/Bouncy';
-import { Brush, Splat } from '../ui/Splat';
+import { OutlineText } from '../ui/OutlineText';
+import { Splat } from '../ui/Splat';
 import { Bob } from '../ui/Bob';
-import { ArrowIcon, CrownIcon, DropIcon } from '../ui/Icons';
+import { CrownIcon, DropIcon } from '../ui/Icons';
 import { useNav } from '../nav';
 import { METER_MAX, useStore } from '../store';
 import { PLAYER_SETS, SETS } from '../pieces';
-import { C, F, tight } from '../theme';
+import { C, F, edge, hard } from '../theme';
 
-// The hero art is drawn on a 350x290 sketch and scaled to fit the space it gets.
+// The hero art is drawn on a 350x270 sketch and scaled to fit the space it gets.
 const ART_W = 350;
-const ART_H = 290;
+const ART_H = 270;
 
 export function Home() {
   const nav = useNav();
@@ -27,8 +27,10 @@ export function Home() {
   const full = save.meter >= METER_MAX;
   const pct = Math.round((save.meter / METER_MAX) * 100);
   const compact = height < 760;
-  const word = Math.min(compact ? 58 : 70, (width - 40) / 5);
+  const word = Math.min(compact ? 62 : 76, (width - 40) / 4.5);
   const next = store.nextReward();
+  // The spotlight behind the pieces should never match the paint on your king.
+  const spot = mine.id === 'ocean' ? C.orange : C.sky;
 
   const k = Math.min(box.w / ART_W, box.h / ART_H) || 0;
   const ox = (box.w - ART_W * k) / 2;
@@ -46,66 +48,59 @@ export function Home() {
         </Pop>
       </View>
 
-      <Pop i={1} style={{ marginTop: compact ? 14 : 22 }}>
-        <View accessible accessibilityRole="header" accessibilityLabel="A Mess of Chess">
-          <View style={s.wordRow}>
-            <Text style={[s.word, { fontSize: word, lineHeight: word }, tight(word)]}>A </Text>
-            <View>
-              <View style={s.brush}>
-                <Brush color={mine.paint} />
-              </View>
-              <Text style={[s.word, { fontSize: word, lineHeight: word }, tight(word)]}>Mess</Text>
-            </View>
-          </View>
-          <Text style={[s.word, { fontSize: word, lineHeight: word, marginTop: -word * 0.1 }, tight(word)]}>of Chess</Text>
+      <Pop i={1} style={{ marginTop: compact ? 14 : 22, marginLeft: 4 }}>
+        <View style={{ transform: [{ rotate: '-4deg' }], transformOrigin: 'left center' }} accessible accessibilityRole="header" accessibilityLabel="A Mess of Chess">
+          <OutlineText size={word}>A Mess</OutlineText>
+          <OutlineText size={word} style={{ marginTop: -word * 0.2 }}>
+            of Chess
+          </OutlineText>
         </View>
       </Pop>
 
       <View style={s.hero} onLayout={(e) => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
         {k > 0 && (
           <>
-            <Pop i={2} style={at(-52, 14, 290)}>
-              <Splat color={mine.paint} size={290 * k} seed={107} arms={5} />
+            <Pop i={2} style={at(60, 26, 236)}>
+              <View style={[s.spot, { backgroundColor: spot, borderRadius: 236 * k }]} />
             </Pop>
-            <Pop i={3} style={at(146, 40, 272)}>
-              <Splat color={SETS.goo.paint} size={272 * k} seed={16} arms={6} style={{ transform: [{ rotate: '40deg' }] }} />
+            <Pop i={3} style={at(224, -8, 132)}>
+              <Splat color={SETS.goo.paint} size={132 * k} seed={16} arms={6} dots={0} outline={9} />
             </Pop>
-            <FloorShadow style={{ position: 'absolute', left: ox + 34 * k, top: oy + 244 * k }} width={156 * k} height={34 * k} />
-            <FloorShadow style={{ position: 'absolute', left: ox + 204 * k, top: oy + 254 * k }} width={142 * k} height={30 * k} />
-            <Bob style={at(-12, 12, 258)} amount={7} tilt={3}>
-              <Image source={mine.art.k} accessibilityLabel={`Your ${mine.name} king`} style={{ width: 258 * k, height: 258 * k, transform: [{ rotate: '-7deg' }] }} />
+            <Bob style={at(6, 18, 240)} amount={7} tilt={3}>
+              <Image source={mine.art.k} accessibilityLabel={`Your ${mine.name} king`} style={{ width: 240 * k, height: 240 * k, transform: [{ rotate: '-8deg' }] }} />
             </Bob>
-            <Bob style={at(166, 54, 222)} amount={7} tilt={-3} delay={500}>
-              <Image source={SETS.goo.art.q} accessibilityLabel="The Goo queen" style={{ width: 222 * k, height: 222 * k, transform: [{ rotate: '8deg' }] }} />
+            <Bob style={at(162, 54, 206)} amount={7} tilt={-3} delay={500}>
+              <Image source={SETS.goo.art.q} accessibilityLabel="The Goo queen" style={{ width: 206 * k, height: 206 * k, transform: [{ rotate: '9deg' }] }} />
             </Bob>
           </>
         )}
       </View>
 
       <Pop i={4}>
-        <Bouncy onPress={() => nav.go({ name: 'meter' })} splash={mine.paint} accessibilityLabel={`Messy Meter, ${pct}% full`}>
+        <Bouncy onPress={() => nav.go({ name: 'meter' })} splash={C.goo} accessibilityLabel={`Messy Meter, ${pct}% full`}>
           <View style={s.meter}>
             <View style={s.meterRow}>
               <Text style={s.meterLabel}>Messy Meter</Text>
-              <Text style={[s.meterHint, full && { color: C.ink, fontFamily: F.bold }]}>{full ? 'Full! Tap to open it' : `${pct}% of the way to new pieces`}</Text>
+              <Text style={s.meterHint}>{full ? 'Full! Tap to open' : `${pct}%`}</Text>
             </View>
-            <MeterBar value={save.meter / METER_MAX} delay={500} color={mine.paint} />
+            <MeterBar value={save.meter / METER_MAX} delay={500} />
           </View>
         </Bouncy>
       </Pop>
 
-      <Pop i={5} style={{ marginTop: 20 }}>
-        <MessyButton label="Play" size="xl" icon={<ArrowIcon color={mine.paint} />} onPress={() => nav.go({ name: 'play' })} />
+      <Pop i={5} style={{ marginTop: 14 }}>
+        <MessyButton label="Play" size="xl" color={mine.paint} onPress={() => nav.go({ name: 'play' })} />
       </Pop>
 
       <View style={s.tiles}>
         <Pop i={6} style={{ flex: 1 }}>
-          <Tile title="Side games" sub="3 quick ones" art={SETS.goo.art.n} tilt={10} splash={SETS.goo.paint} onPress={() => nav.go({ name: 'sidegames' })} compact={compact} />
+          <Tile title={'Side\ngames'} color={C.pink} art={SETS.slime.art.n} tilt={8} splash={SETS.goo.paint} onPress={() => nav.go({ name: 'sidegames' })} compact={compact} />
         </Pop>
         <Pop i={7} style={{ flex: 1 }}>
           <Tile
             title="Pieces"
             sub={`${save.owned.length} of ${PLAYER_SETS.length} sets`}
+            color={C.blue}
             art={SETS[next ?? 'gold'].art.k}
             tilt={-8}
             splash={SETS[next ?? 'gold'].paint}
@@ -118,46 +113,29 @@ export function Home() {
   );
 }
 
-function Tile({ title, sub, art, tilt, splash, onPress, compact }: { title: string; sub: string; art: any; tilt: number; splash: string; onPress: () => void; compact: boolean }) {
+function Tile({ title, sub, color, art, tilt, splash, onPress, compact }: { title: string; sub?: string; color: string; art: any; tilt: number; splash: string; onPress: () => void; compact: boolean }) {
   return (
-    <Bouncy onPress={onPress} splash={splash} tilt={tilt > 0 ? 1.5 : -1.5} accessibilityLabel={`${title}, ${sub}`}>
-      <View style={[s.tile, { height: compact ? 80 : 92 }]}>
+    <Bouncy onPress={onPress} splash={splash} tilt={tilt > 0 ? 1.5 : -1.5} accessibilityLabel={[title.replace('\n', ' '), sub].filter(Boolean).join(', ')}>
+      <View style={[s.tile, { height: compact ? 76 : 86, backgroundColor: color }]}>
         <Text style={s.tileTitle}>{title}</Text>
-        <Text style={s.tileSub}>{sub}</Text>
+        {sub ? <Text style={s.tileSub}>{sub}</Text> : null}
         <Image source={art} style={[s.tileArt, { transform: [{ rotate: `${tilt}deg` }] }]} />
       </View>
     </Bouncy>
   );
 }
 
-/** A soft blurry oval so the pieces look like they stand on the paper. */
-function FloorShadow({ width, height, style }: { width: number; height: number; style: any }) {
-  return (
-    <Svg width={width} height={height} viewBox="0 0 100 100" preserveAspectRatio="none" style={style} pointerEvents="none">
-      <Defs>
-        <RadialGradient id="floor" cx="50%" cy="50%" r="50%">
-          <Stop offset="0" stopColor={C.ink} stopOpacity={0.22} />
-          <Stop offset="1" stopColor={C.ink} stopOpacity={0} />
-        </RadialGradient>
-      </Defs>
-      <Ellipse cx={50} cy={50} rx={50} ry={50} fill="url(#floor)" />
-    </Svg>
-  );
-}
-
 const s = StyleSheet.create({
-  top: { flexDirection: 'row', gap: 8, minHeight: 44, alignItems: 'center' },
-  wordRow: { flexDirection: 'row', alignItems: 'flex-end' },
-  word: { fontFamily: F.display, color: C.ink },
-  brush: { position: 'absolute', left: -8, right: -14, top: '4%', bottom: '2%', transform: [{ rotate: '-3deg' }] },
-  hero: { flex: 1, minHeight: 150 },
-  meter: { gap: 8 },
-  meterRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  meterLabel: { fontFamily: F.title, color: C.ink, fontSize: 16 },
-  meterHint: { fontFamily: F.body, color: C.gray, fontSize: 14 },
-  tiles: { flexDirection: 'row', gap: 12, marginTop: 12 },
-  tile: { borderRadius: 24, backgroundColor: C.surface, paddingLeft: 16, justifyContent: 'center', gap: 2, overflow: 'hidden' },
-  tileTitle: { fontFamily: F.title, color: C.ink, fontSize: 18, letterSpacing: -0.4 },
-  tileSub: { fontFamily: F.body, color: C.gray, fontSize: 13 },
-  tileArt: { position: 'absolute', right: -14, bottom: -18, width: 78, height: 78 },
+  top: { flexDirection: 'row', gap: 10, minHeight: 44, alignItems: 'center' },
+  hero: { flex: 1, minHeight: 140, marginTop: 4 },
+  spot: { width: '100%', height: '100%', ...edge(3), ...hard(6) },
+  meter: { backgroundColor: C.surface, borderRadius: 20, paddingHorizontal: 14, paddingTop: 10, paddingBottom: 13, gap: 8, ...edge(3), ...hard(4) },
+  meterRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  meterLabel: { fontFamily: F.title, color: C.ink, fontSize: 20, lineHeight: 24 },
+  meterHint: { fontFamily: F.bold, color: C.ink, fontSize: 14 },
+  tiles: { flexDirection: 'row', gap: 14, marginTop: 18 },
+  tile: { borderRadius: 20, paddingLeft: 14, justifyContent: 'center', overflow: 'hidden', ...edge(3), ...hard(4) },
+  tileTitle: { fontFamily: F.title, color: C.ink, fontSize: 20, lineHeight: 23 },
+  tileSub: { fontFamily: F.bold, color: C.ink, fontSize: 13 },
+  tileArt: { position: 'absolute', right: -12, bottom: -18, width: 80, height: 80 },
 });

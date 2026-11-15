@@ -32,7 +32,7 @@ export const useNav = () => {
   return n;
 };
 
-const WIPES = [C.slime, C.goo, C.yellow, C.sky, C.orange];
+const WIPES = [C.slime, C.goo, C.sky, C.orange, C.white];
 
 /**
  * A tiny stack navigator. Every screen change is a paint splat that
@@ -119,7 +119,7 @@ export function Navigator({ render }: { render: (r: Route, key: number) => React
         {render(nav.route, key)}
         <View pointerEvents="none" style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }]}>
           <Animated.View style={[{ width: size, height: size }, splatStyle]}>
-            <Splat color={wipe.color} size={size} seed={wipe.seed} arms={8} dots={8} />
+            <Splat color={wipe.color} size={size} seed={wipe.seed} arms={8} dots={8} outline={1.2} />
           </Animated.View>
         </View>
       </View>

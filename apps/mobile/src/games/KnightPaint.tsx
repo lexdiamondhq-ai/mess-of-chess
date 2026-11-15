@@ -6,7 +6,8 @@ import { Shell, type Phase } from './Shell';
 import { buzz } from '../ui/Bouncy';
 import { useStore } from '../store';
 import { SETS } from '../pieces';
-import { C, F, fill, lift } from '../theme';
+import { C, F, edge, fill } from '../theme';
+import { BOARD_RADIUS, BoardFrame, BoardSquares, paintStyle } from '../ui/Board';
 
 const N = 5;
 const JUMPS = [
@@ -30,7 +31,7 @@ export function KnightPaint() {
   const [at, setAt] = useState(0);
   const [painted, setPainted] = useState<Set<number>>(new Set([0]));
   const [from, setFrom] = useState<{ dx: number; dy: number; n: number } | null>(null);
-  const size = Math.floor(Math.min(width - 40, 420) / N) * N;
+  const size = Math.floor(Math.min(width - 52, 420) / N) * N;
   const cell = size / N;
   const moves = hops(at, painted);
 
@@ -63,14 +64,13 @@ export function KnightPaint() {
         setPhase('play');
       }}
     >
-      <View style={[s.board, { width: size, height: size }]}>
+      <View style={{ width: size, height: size }}>
+        <BoardFrame />
         <View style={s.clip} pointerEvents="none">
-          {Array.from({ length: N * N }, (_, i) => (
-            <View key={`bg${i}`} style={[s.cell, { left: (i % N) * cell, top: Math.floor(i / N) * cell, width: cell, height: cell, backgroundColor: ((i % N) + Math.floor(i / N)) % 2 ? C.boardDark : C.boardLight }]} />
-          ))}
+          <BoardSquares n={N} sq={cell} />
           {[...painted].map((i) => (
             <View key={`p${i}`} pointerEvents="none" style={[s.cell, { left: (i % N) * cell, top: Math.floor(i / N) * cell, width: cell, height: cell }]}>
-              <Animated.View entering={ZoomIn.springify().damping(9)} style={{ width: cell, height: cell, backgroundColor: set.paint, opacity: 0.82 }} />
+              <Animated.View entering={ZoomIn.springify().damping(9)} style={paintStyle(cell, set.paint)} />
             </View>
           ))}
         </View>
@@ -109,10 +109,9 @@ function Knight({ src, cell, x, y, from }: { src: any; cell: number; x: number; 
 }
 
 const s = StyleSheet.create({
-  board: { backgroundColor: C.boardLight, borderRadius: 22, ...lift(14) },
-  clip: { ...fill, borderRadius: 22, overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth, borderColor: C.line },
+  clip: { ...fill, borderRadius: BOARD_RADIUS - 3, overflow: 'hidden' },
   cell: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
-  dot: { width: '30%', aspectRatio: 1, borderRadius: 99, backgroundColor: C.ink, opacity: 0.3 },
+  dot: { width: '28%', aspectRatio: 1, borderRadius: 99, backgroundColor: C.white, ...edge(3) },
   hud: { fontFamily: F.title, fontSize: 22, color: C.ink },
-  tip: { fontFamily: F.body, color: C.gray, fontSize: 15, marginTop: 18 },
+  tip: { fontFamily: F.bold, color: C.ink, fontSize: 15, marginTop: 24 },
 });

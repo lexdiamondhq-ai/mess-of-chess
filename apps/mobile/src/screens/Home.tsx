@@ -1,116 +1,141 @@
+import { useState } from 'react';
 import { Image, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { useEffect } from 'react';
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
-import { Screen, Pop, Title, Card } from '../ui/Screen';
+import { Screen, Pop, Chip } from '../ui/Screen';
 import { MessyButton } from '../ui/MessyButton';
 import { MeterBar } from '../ui/MeterBar';
 import { Bouncy } from '../ui/Bouncy';
+import { OutlineText } from '../ui/OutlineText';
 import { Splat } from '../ui/Splat';
 import { Bob } from '../ui/Bob';
 import { CrownIcon, DropIcon } from '../ui/Icons';
 import { useNav } from '../nav';
 import { METER_MAX, useStore } from '../store';
-import { SETS } from '../pieces';
-import { C, F, chunky } from '../theme';
+import { PLAYER_SETS, SETS } from '../pieces';
+import { C, F, edge, hard } from '../theme';
+
+// The hero art is drawn on a 350x270 sketch and scaled to fit the space it gets.
+const ART_W = 350;
+const ART_H = 270;
 
 export function Home() {
   const nav = useNav();
-  const { save } = useStore();
+  const store = useStore();
+  const { save } = store;
   const { width, height } = useWindowDimensions();
+  const [box, setBox] = useState({ w: 0, h: 0 });
   const mine = SETS[save.equipped];
   const full = save.meter >= METER_MAX;
+  const pct = Math.round((save.meter / METER_MAX) * 100);
   const compact = height < 760;
-  const hero = Math.min(width * 0.4, compact ? 130 : 170);
+  const word = Math.min(compact ? 62 : 76, (width - 40) / 4.5);
+  const next = store.nextReward();
+  // The spotlight behind the pieces should never match the paint on your king.
+  const spot = mine.id === 'ocean' ? C.orange : C.sky;
+
+  const k = Math.min(box.w / ART_W, box.h / ART_H) || 0;
+  const ox = (box.w - ART_W * k) / 2;
+  const oy = (box.h - ART_H * k) / 2;
+  const at = (x: number, y: number, size: number) => ({ position: 'absolute', left: ox + x * k, top: oy + y * k, width: size * k, height: size * k }) as const;
 
   return (
-    <Screen tint={mine.paint}>
+    <Screen>
       <View style={s.top}>
-        <Pop i={0} style={s.pill}>
-          <CrownIcon />
-          <Text style={s.pillText}>{save.wins} wins</Text>
+        <Pop i={0}>
+          <Chip icon={<CrownIcon />}>{save.wins} wins</Chip>
         </Pop>
-        <Pop i={0} style={s.pill}>
-          <DropIcon />
-          <Text style={s.pillText}>{save.splats} splats</Text>
+        <Pop i={0}>
+          <Chip icon={<DropIcon />}>{save.splats} splats</Chip>
         </Pop>
       </View>
 
-      <View style={s.hero}>
-        <View style={s.titleSplat}>
-          <Splat color={C.yellow} size={width * 0.95} seed={23} arms={8} dots={12} drips={4} />
+      <Pop i={1} style={{ marginTop: compact ? 14 : 22, marginLeft: 4 }}>
+        <View style={{ transform: [{ rotate: '-4deg' }], transformOrigin: 'left center' }} accessible accessibilityRole="header" accessibilityLabel="A Mess of Chess">
+          <OutlineText size={word}>A Mess</OutlineText>
+          <OutlineText size={word} style={{ marginTop: -word * 0.2 }}>
+            of Chess
+          </OutlineText>
         </View>
-        <Bob style={[s.heroPiece, { left: -6 }]} amount={10} tilt={8}>
-          <Image source={mine.art.k} style={{ width: hero, height: hero, transform: [{ rotate: '-12deg' }] }} />
-        </Bob>
-        <Bob style={[s.heroPiece, { right: -6 }]} amount={10} tilt={-8} delay={500}>
-          <Image source={SETS.goo.art.q} style={{ width: hero, height: hero, transform: [{ rotate: '12deg' }] }} />
-        </Bob>
-        <Pop i={1} style={{ alignItems: 'center' }}>
-          <View style={{ alignItems: 'center', transform: [{ rotate: '-5deg' }] }}>
-          <Title size={compact ? 52 : 62} color={C.ink} style={s.titleA}>
-            A MESS
-          </Title>
-          <Title size={compact ? 44 : 52} color={C.light} style={s.titleB}>
-            OF CHESS
-          </Title>
-          </View>
-        </Pop>
+      </Pop>
+
+      <View style={s.hero} onLayout={(e) => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
+        {k > 0 && (
+          <>
+            <Pop i={2} style={at(60, 26, 236)}>
+              <View style={[s.spot, { backgroundColor: spot, borderRadius: 236 * k }]} />
+            </Pop>
+            <Pop i={3} style={at(224, -8, 132)}>
+              <Splat color={SETS.goo.paint} size={132 * k} seed={16} arms={6} dots={0} outline={9} />
+            </Pop>
+            <Bob style={at(6, 18, 240)} amount={7} tilt={3}>
+              <Image source={mine.art.k} accessibilityLabel={`Your ${mine.name} king`} style={{ width: 240 * k, height: 240 * k, transform: [{ rotate: '-8deg' }] }} />
+            </Bob>
+            <Bob style={at(162, 54, 206)} amount={7} tilt={-3} delay={500}>
+              <Image source={SETS.goo.art.q} accessibilityLabel="The Goo queen" style={{ width: 206 * k, height: 206 * k, transform: [{ rotate: '9deg' }] }} />
+            </Bob>
+          </>
+        )}
       </View>
 
-      <Pop i={2}>
-        <Bouncy onPress={() => nav.go({ name: 'meter' })} splash={C.goo} accessibilityLabel="Messy Meter">
-          <Card style={{ gap: 10 }}>
+      <Pop i={4}>
+        <Bouncy onPress={() => nav.go({ name: 'meter' })} splash={C.goo} accessibilityLabel={`Messy Meter, ${pct}% full`}>
+          <View style={s.meter}>
             <View style={s.meterRow}>
-              <Text style={s.meterLabel}>MESSY METER</Text>
-              <Text style={[s.meterPct, full && { color: C.yellow }]}>{full ? 'READY!' : `${Math.round((save.meter / METER_MAX) * 100)}%`}</Text>
+              <Text style={s.meterLabel}>Messy Meter</Text>
+              <Text style={s.meterHint}>{full ? 'Full! Tap to open' : `${pct}%`}</Text>
             </View>
             <MeterBar value={save.meter / METER_MAX} delay={500} />
-            {full ? <ReadyNudge /> : <Text style={s.meterHint}>Make a mess to fill it and win new pieces</Text>}
-          </Card>
+          </View>
         </Bouncy>
       </Pop>
 
-      <Pop i={3} style={{ marginTop: 18 }}>
-        <MessyButton label="PLAY" sub="Paint the board. Splat their pieces." size="xl" drips onPress={() => nav.go({ name: 'play' })} />
+      <Pop i={5} style={{ marginTop: 14 }}>
+        <MessyButton label="Play" size="xl" color={mine.paint} onPress={() => nav.go({ name: 'play' })} />
       </Pop>
 
-      <View style={s.row}>
-        <Pop i={4} style={{ flex: 1 }}>
-          <MessyButton label="SIDE GAMES" color={C.goo} size="md" tilt={2} onPress={() => nav.go({ name: 'sidegames' })} />
+      <View style={s.tiles}>
+        <Pop i={6} style={{ flex: 1 }}>
+          <Tile title={'Side\ngames'} color={C.pink} art={SETS.slime.art.n} tilt={8} splash={SETS.goo.paint} onPress={() => nav.go({ name: 'sidegames' })} compact={compact} />
         </Pop>
-        <Pop i={5} style={{ flex: 1 }}>
-          <MessyButton label="PIECES" color={C.sky} size="md" onPress={() => nav.go({ name: 'pieces' })} />
+        <Pop i={7} style={{ flex: 1 }}>
+          <Tile
+            title="Pieces"
+            sub={`${save.owned.length} of ${PLAYER_SETS.length} sets`}
+            color={C.blue}
+            art={SETS[next ?? 'gold'].art.k}
+            tilt={-8}
+            splash={SETS[next ?? 'gold'].paint}
+            onPress={() => nav.go({ name: 'pieces' })}
+            compact={compact}
+          />
         </Pop>
       </View>
     </Screen>
   );
 }
 
-function ReadyNudge() {
-  const t = useSharedValue(0);
-  useEffect(() => {
-    t.value = withRepeat(withSequence(withTiming(1, { duration: 420, easing: Easing.out(Easing.quad) }), withTiming(0, { duration: 420 })), -1);
-  }, []);
-  const st = useAnimatedStyle(() => ({ transform: [{ scale: 1 + t.value * 0.06 }] }));
+function Tile({ title, sub, color, art, tilt, splash, onPress, compact }: { title: string; sub?: string; color: string; art: any; tilt: number; splash: string; onPress: () => void; compact: boolean }) {
   return (
-    <Animated.View style={st}>
-      <Text style={[s.meterHint, { color: C.yellow }]}>It’s full! Tap to splat it open!</Text>
-    </Animated.View>
+    <Bouncy onPress={onPress} splash={splash} tilt={tilt > 0 ? 1.5 : -1.5} accessibilityLabel={[title.replace('\n', ' '), sub].filter(Boolean).join(', ')}>
+      <View style={[s.tile, { height: compact ? 76 : 86, backgroundColor: color }]}>
+        <Text style={s.tileTitle}>{title}</Text>
+        {sub ? <Text style={s.tileSub}>{sub}</Text> : null}
+        <Image source={art} style={[s.tileArt, { transform: [{ rotate: `${tilt}deg` }] }]} />
+      </View>
+    </Bouncy>
   );
 }
 
 const s = StyleSheet.create({
-  top: { flexDirection: 'row', justifyContent: 'space-between' },
-  pill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.card, borderRadius: 99, borderWidth: 2, borderColor: C.ink, paddingHorizontal: 14, paddingVertical: 6, ...chunky(3) },
-  pillText: { fontFamily: F.black, color: C.light, fontSize: 14 },
-  hero: { flex: 1, minHeight: 230, alignItems: 'center', justifyContent: 'center' },
-  titleSplat: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
-  heroPiece: { position: 'absolute', bottom: '6%' },
-  titleA: { textShadowColor: C.light, letterSpacing: 1 },
-  titleB: { letterSpacing: 1, marginTop: -4 },
+  top: { flexDirection: 'row', gap: 10, minHeight: 44, alignItems: 'center' },
+  hero: { flex: 1, minHeight: 140, marginTop: 4 },
+  spot: { width: '100%', height: '100%', ...edge(3), ...hard(6) },
+  meter: { backgroundColor: C.surface, borderRadius: 20, paddingHorizontal: 14, paddingTop: 10, paddingBottom: 13, gap: 8, ...edge(3), ...hard(4) },
   meterRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  meterLabel: { fontFamily: F.display, color: C.light, fontSize: 22, letterSpacing: 0.5 },
-  meterPct: { fontFamily: F.display, color: C.slime, fontSize: 22 },
-  meterHint: { fontFamily: F.bold, color: C.muted, fontSize: 14 },
-  row: { flexDirection: 'row', gap: 12, marginTop: 22 },
+  meterLabel: { fontFamily: F.title, color: C.ink, fontSize: 20, lineHeight: 24 },
+  meterHint: { fontFamily: F.bold, color: C.ink, fontSize: 14 },
+  tiles: { flexDirection: 'row', gap: 14, marginTop: 18 },
+  tile: { borderRadius: 20, paddingLeft: 14, justifyContent: 'center', overflow: 'hidden', ...edge(3), ...hard(4) },
+  tileTitle: { fontFamily: F.title, color: C.ink, fontSize: 20, lineHeight: 23 },
+  tileSub: { fontFamily: F.bold, color: C.ink, fontSize: 13 },
+  tileArt: { position: 'absolute', right: -12, bottom: -18, width: 80, height: 80 },
 });

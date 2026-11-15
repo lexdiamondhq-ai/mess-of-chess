@@ -37,7 +37,7 @@ interface Props {
 }
 
 /** Anything tappable: squishes down, springs back with a wobble, and pops a paint splat. */
-export function Bouncy({ onPress, children, style, splash, disabled, accessibilityLabel, tilt = -2 }: Props) {
+export function Bouncy({ onPress, children, style, splash, disabled, accessibilityLabel, tilt = -1.5 }: Props) {
   const scale = useSharedValue(1);
   const rot = useSharedValue(0);
   const pop = useSharedValue(0);
@@ -84,7 +84,7 @@ export function Bouncy({ onPress, children, style, splash, disabled, accessibili
         {splash && (
           <View pointerEvents="none" style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}>
             <Animated.View style={splat}>
-              <Splat color={splash} size={220} seed={seed} shine={false} drips={0} />
+              <Splat color={splash} size={220} seed={seed} />
             </Animated.View>
           </View>
         )}

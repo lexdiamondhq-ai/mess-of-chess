@@ -12,7 +12,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { Splat } from './Splat';
-import { C, F } from '../theme';
 
 export interface Hit {
   key: number;
@@ -121,7 +120,7 @@ export function SquareBurst({ x, y, color, seed, sq }: { x: number; y: number; c
   const size = sq * 3.4;
   return (
     <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: x - size / 2, top: y - size / 2, width: size, height: size }, st]}>
-      <Splat color={color} size={size} seed={seed} arms={8} dots={12} drips={2} />
+      <Splat color={color} size={size} seed={seed} arms={7} dots={8} drips={2} />
     </Animated.View>
   );
 }
@@ -129,7 +128,4 @@ export function SquareBurst({ x, y, color, seed, sq }: { x: number; y: number; c
 const s = StyleSheet.create({
   center: { alignItems: 'center', justifyContent: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
-  word: { fontFamily: F.display, textShadowOffset: { width: 0, height: 6 }, textShadowRadius: 0, letterSpacing: 1, maxWidth: '86%' },
-  tag: { fontFamily: F.display, fontSize: 22, letterSpacing: 3, textShadowOffset: { width: 0, height: 3 }, textShadowRadius: 0, marginBottom: -6 },
-  drip: { position: 'absolute', top: 0, borderBottomLeftRadius: 99, borderBottomRightRadius: 99 },
 });

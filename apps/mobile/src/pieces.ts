@@ -16,7 +16,7 @@ export interface PieceSet {
 
 export const SETS: Record<SetId, PieceSet> = {
   slime: {
-    id: 'slime', name: 'Slime', paint: '#8BE04E', on: '#1A1030', blurb: 'The classic. Gloopy and green.',
+    id: 'slime', name: 'Slime', paint: '#8BE04E', on: '#16161D', blurb: 'The classic. Gloopy and green.',
     art: {
       k: require('../assets/sets/slime/king.png'), q: require('../assets/sets/slime/queen.png'),
       r: require('../assets/sets/slime/rook.png'), b: require('../assets/sets/slime/bishop.png'),
@@ -24,7 +24,7 @@ export const SETS: Record<SetId, PieceSet> = {
     },
   },
   goo: {
-    id: 'goo', name: 'Goo', paint: '#FF5FA2', on: '#1A1030', blurb: 'Pink, sticky, always up to something.',
+    id: 'goo', name: 'Goo', paint: '#FF5FA2', on: '#16161D', blurb: 'Pink, sticky, always up to something.',
     art: {
       k: require('../assets/sets/goo/king.png'), q: require('../assets/sets/goo/queen.png'),
       r: require('../assets/sets/goo/rook.png'), b: require('../assets/sets/goo/bishop.png'),
@@ -32,7 +32,7 @@ export const SETS: Record<SetId, PieceSet> = {
     },
   },
   ocean: {
-    id: 'ocean', name: 'Ocean', paint: '#2BA8F0', on: '#1A1030', blurb: 'Splashy blue. Mind the waves.',
+    id: 'ocean', name: 'Ocean', paint: '#2BA8F0', on: '#16161D', blurb: 'Splashy blue. Mind the waves.',
     art: {
       k: require('../assets/sets/ocean/king.png'), q: require('../assets/sets/ocean/queen.png'),
       r: require('../assets/sets/ocean/rook.png'), b: require('../assets/sets/ocean/bishop.png'),
@@ -40,7 +40,7 @@ export const SETS: Record<SetId, PieceSet> = {
     },
   },
   tangerine: {
-    id: 'tangerine', name: 'Tangerine', paint: '#FF7A1F', on: '#1A1030', blurb: 'Zesty orange drips.',
+    id: 'tangerine', name: 'Tangerine', paint: '#FF7A1F', on: '#16161D', blurb: 'Zesty orange drips.',
     art: {
       k: require('../assets/sets/tangerine/king.png'), q: require('../assets/sets/tangerine/queen.png'),
       r: require('../assets/sets/tangerine/rook.png'), b: require('../assets/sets/tangerine/bishop.png'),
@@ -56,7 +56,7 @@ export const SETS: Record<SetId, PieceSet> = {
     },
   },
   gold: {
-    id: 'gold', name: 'Liquid Gold', paint: '#F5C02E', on: '#1A1030', blurb: 'Fancy. Very fancy. Still messy.',
+    id: 'gold', name: 'Liquid Gold', paint: '#F5C02E', on: '#16161D', blurb: 'Fancy. Very fancy. Still messy.',
     art: {
       k: require('../assets/sets/gold/king.png'), q: require('../assets/sets/gold/queen.png'),
       r: require('../assets/sets/gold/rook.png'), b: require('../assets/sets/gold/bishop.png'),
@@ -64,7 +64,7 @@ export const SETS: Record<SetId, PieceSet> = {
     },
   },
   chalk: {
-    id: 'chalk', name: 'Marshmallow', paint: '#F4F0FF', on: '#1A1030', blurb: 'Soft white paint, hard to keep clean.',
+    id: 'chalk', name: 'Marshmallow', paint: '#F4F0FF', on: '#16161D', blurb: 'Soft white paint, hard to keep clean.',
     art: {
       k: require('../assets/sets/chalk/king.png'), q: require('../assets/sets/chalk/queen.png'),
       r: require('../assets/sets/chalk/rook.png'), b: require('../assets/sets/chalk/bishop.png'),

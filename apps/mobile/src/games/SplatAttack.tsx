@@ -23,7 +23,7 @@ export function SplatAttack() {
   const n = useRef(0);
   const leftRef = useRef(TIME);
   leftRef.current = left;
-  const cell = Math.min((width - 36 - 24) / 3, 130);
+  const cell = Math.min((width - 40 - 24) / 3, 130);
 
   useEffect(() => {
     if (phase !== 'play') return;
@@ -99,7 +99,7 @@ export function SplatAttack() {
           </Pressable>
         ))}
       </View>
-      <Text style={s.legend}>Pink = +1 · Queen +2 · King +3 · Yours = −3</Text>
+      <Text style={s.legend}>Pink +1 · Queen +2 · King +3 · Yours −3</Text>
     </Shell>
   );
 }
@@ -118,12 +118,12 @@ function Pot({ cell, pop }: { cell: number; pop: Pop | null }) {
       </View>
       {/* front of the pot */}
       <View style={[s.potFront, { top: mouthY, left: cell * 0.06, right: cell * 0.06, bottom: 0, borderBottomLeftRadius: cell * 0.22, borderBottomRightRadius: cell * 0.22 }]}>
-        <View style={[s.potBand, { top: cell * 0.12 }]} />
+        <View style={[s.potBand, { top: cell * 0.16, height: cell * 0.16 }]} />
       </View>
       <View style={[s.rim, { top: mouthY - mouthH / 2, height: mouthH, left: cell * 0.03, right: cell * 0.03, borderRadius: cell }]} />
       {pop?.hit && (
         <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center', top: -cell * 0.2 }]}>
-          <Splat color={pop.set === 'goo' ? SETS.goo.paint : C.ink} size={cell * 1.3} seed={pop.id * 13} drips={1} />
+          <Splat color={pop.set === 'goo' ? SETS.goo.paint : C.white} size={cell * 1.4} seed={pop.id * 13} outline={6} />
         </View>
       )}
     </View>
@@ -153,9 +153,9 @@ function Popper({ pop, cell }: { pop: Pop; cell: number }) {
 const s = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12, rowGap: 22, justifyContent: 'center' },
   mouth: { position: 'absolute', backgroundColor: C.ink },
-  rim: { position: 'absolute', borderWidth: 4, borderColor: C.cardHi, backgroundColor: 'transparent' },
-  potFront: { position: 'absolute', backgroundColor: C.card, borderWidth: 3, borderTopWidth: 0, borderColor: C.ink, overflow: 'hidden' },
-  potBand: { position: 'absolute', left: 0, right: 0, height: 8, backgroundColor: C.goo, opacity: 0.8 },
-  timer: { fontFamily: F.display, fontSize: 28, color: C.light },
-  legend: { fontFamily: F.bold, color: C.muted, fontSize: 14, marginTop: 24, textAlign: 'center' },
+  rim: { position: 'absolute', borderWidth: 3, borderColor: C.ink, backgroundColor: 'transparent' },
+  potFront: { position: 'absolute', backgroundColor: C.white, overflow: 'hidden', borderWidth: 3, borderTopWidth: 0, borderColor: C.ink },
+  potBand: { position: 'absolute', left: 0, right: 0, backgroundColor: C.goo, borderTopWidth: 3, borderBottomWidth: 3, borderColor: C.ink },
+  timer: { fontFamily: F.title, fontSize: 26, color: C.ink },
+  legend: { fontFamily: F.bold, color: C.ink, fontSize: 14, marginTop: 24, textAlign: 'center' },
 });

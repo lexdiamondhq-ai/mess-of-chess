@@ -32,7 +32,7 @@ export const useNav = () => {
   return n;
 };
 
-const WIPES = [C.slime, C.goo, C.yellow, C.sky, C.orange];
+const WIPES = [C.slime, C.goo, C.sky, C.orange, C.white];
 
 /**
  * A tiny stack navigator. Every screen change is a paint splat that
@@ -45,7 +45,7 @@ export function Navigator({ render }: { render: (r: Route, key: number) => React
   const busy = useRef(false);
   const n = useRef(0);
   const { width, height } = useWindowDimensions();
-  const size = Math.hypot(width, height) * 2.6;
+  const size = Math.hypot(width, height) * 2.9;
 
   const grow = useSharedValue(0);
   const fall = useSharedValue(0);
@@ -58,7 +58,7 @@ export function Navigator({ render }: { render: (r: Route, key: number) => React
     (fn: (s: Route[]) => Route[]) => {
       setStack(fn);
       setKey((k) => k + 1);
-      fall.value = withTiming(1, { duration: 620, easing: Easing.in(Easing.quad) }, (done) => {
+      fall.value = withTiming(1, { duration: 540, easing: Easing.in(Easing.quad) }, (done) => {
         if (done) {
           grow.value = 0;
           fall.value = 0;
@@ -77,7 +77,7 @@ export function Navigator({ render }: { render: (r: Route, key: number) => React
       setWipe({ color: WIPES[n.current % WIPES.length], seed: 11 + n.current * 13 });
       fall.value = 0;
       grow.value = 0;
-      grow.value = withTiming(1, { duration: 360, easing: Easing.out(Easing.cubic) }, (done) => {
+      grow.value = withTiming(1, { duration: 320, easing: Easing.out(Easing.cubic) }, (done) => {
         if (done) runOnJS(swap)(fn);
       });
     },
@@ -115,11 +115,11 @@ export function Navigator({ render }: { render: (r: Route, key: number) => React
 
   return (
     <Ctx.Provider value={nav}>
-      <View style={{ flex: 1, backgroundColor: C.grape }}>
+      <View style={{ flex: 1, backgroundColor: C.paper }}>
         {render(nav.route, key)}
         <View pointerEvents="none" style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }]}>
           <Animated.View style={[{ width: size, height: size }, splatStyle]}>
-            <Splat color={wipe.color} size={size} seed={wipe.seed} arms={9} dots={14} drips={5} shine={false} />
+            <Splat color={wipe.color} size={size} seed={wipe.seed} arms={8} dots={8} outline={1.2} />
           </Animated.View>
         </View>
       </View>

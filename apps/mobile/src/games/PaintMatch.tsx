@@ -5,7 +5,7 @@ import { Shell, type Phase } from './Shell';
 import { Bouncy, buzz } from '../ui/Bouncy';
 import { Splat } from '../ui/Splat';
 import { SETS, type PieceType, type SetId } from '../pieces';
-import { C, F, fill } from '../theme';
+import { C, F, edge, fill, hard } from '../theme';
 
 type Card = { id: number; face: string; set: SetId; type: PieceType; open: boolean; done: boolean };
 
@@ -29,7 +29,7 @@ export function PaintMatch() {
   const [cards, setCards] = useState<Card[]>(deal);
   const [flips, setFlips] = useState(0);
   const [lock, setLock] = useState(false);
-  const w = (width - 36 - 24) / 3;
+  const w = (width - 40 - 28 - 6) / 3;
 
   function flip(i: number) {
     if (phase !== 'play' || lock || cards[i].open || cards[i].done) return;
@@ -64,7 +64,7 @@ export function PaintMatch() {
       color={C.sky}
       phase={phase}
       score={flips}
-      scoreLabel="TRIES (FEWER IS BETTER)"
+      scoreLabel="Tries (fewer is better)"
       lowerIsBetter
       mess={(s) => Math.max(6, Math.min(20, 26 - s))}
       hud={<Text style={s.hud}>{cards.filter((c) => c.done).length / 2} / 6 pairs</Text>}
@@ -97,15 +97,10 @@ function FlipCard({ card, w, onPress }: { card: Card; w: number; onPress: () => 
     <Bouncy onPress={onPress} accessibilityLabel={card.open || card.done ? `${set.name} piece` : 'Face-down card'}>
       <View style={{ width: w, height: h }}>
         <Animated.View style={[s.card, s.back, back]}>
-          <Splat color={C.goo} size={w * 0.9} seed={card.id + 5} drips={1} shine={false} />
+          <Splat color={C.goo} size={w * 0.95} seed={card.id + 5} dots={0} outline={7} />
           <Text style={s.q}>?</Text>
         </Animated.View>
-        <Animated.View style={[s.card, { backgroundColor: card.done ? set.paint : C.light }, front]}>
-          {card.done && (
-            <View style={{ position: 'absolute', opacity: 0.4 }}>
-              <Splat color="#FFFFFF" size={w * 1.1} seed={card.id} drips={0} shine={false} />
-            </View>
-          )}
+        <Animated.View style={[s.card, s.face, card.done && { backgroundColor: set.paint }, front]}>
           <Image source={set.art[card.type]} style={{ width: w * 0.85, height: w * 0.85 }} />
         </Animated.View>
       </View>
@@ -114,9 +109,10 @@ function FlipCard({ card, w, onPress }: { card: Card; w: number; onPress: () => 
 }
 
 const s = StyleSheet.create({
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' },
-  card: { ...fill, borderRadius: 20, borderWidth: 3, borderColor: C.ink, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', backfaceVisibility: 'hidden' },
-  back: { backgroundColor: C.card },
-  q: { position: 'absolute', fontFamily: F.display, fontSize: 40, color: C.ink },
-  hud: { fontFamily: F.display, fontSize: 22, color: C.light },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, justifyContent: 'center' },
+  card: { ...fill, borderRadius: 18, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', backfaceVisibility: 'hidden', ...edge(3), ...hard(4) },
+  back: { backgroundColor: C.blue },
+  face: { backgroundColor: C.white },
+  q: { position: 'absolute', fontFamily: F.title, fontSize: 34, lineHeight: 40, color: C.ink },
+  hud: { fontFamily: F.title, fontSize: 20, lineHeight: 24, color: C.ink },
 });
